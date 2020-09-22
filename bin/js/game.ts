@@ -1,3 +1,18 @@
+const TILE_SIZE = 16;
+
+function CheckCollision(r1, r2) {
+  if (
+    r1.x < r2.x + r2.width &&
+    r1.x + r1.width > r2.x &&
+    r1.y < r2.y + r2.height &&
+    r1.y + r1.height > r2.y
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 class GameObjectManager {
   static list: GameObject[] = [];
   static game: Game;
@@ -24,6 +39,16 @@ class GameObjectManager {
       e.Update();
     });
   }
+
+  static CheckCollision(checkRect: any, me: GameObject): GameObject[] {
+    const list = [];
+    this.list.forEach((e) => {
+      if (e == me) return;
+      if (CheckCollision(checkRect, e.GetRect())) list.push(e);
+    });
+
+    return list;
+  }
 }
 
 class Force {
@@ -44,7 +69,7 @@ class GameObject {
   tx: number;
   ty: number;
   spr: Phaser.Sprite;
-  forces: Force[] = [];
+  forces: Vector[] = [];
   weight: number;
 
   constructor(game: Phaser.Game, sprX, sprY, sprName, frame) {
@@ -58,26 +83,55 @@ class GameObject {
     this.weight = 10;
   }
 
-  Move(x, y, spd) {
-    this.forces.push(new Force(x, y, spd));
+  GetRect() {
+    return {
+      x: this.x,
+      y: this.y,
+      width: TILE_SIZE - 5,
+      height: TILE_SIZE - 5,
+    };
+  }
+
+  Move(x, y) {
+    this.forces.push(new Vector(x, y));
   }
 
   Update() {
+    let fx = 0;
+    let fy = 0;
+    let allf = 0;
+    if (this.forces.length == 0) return;
+
     this.forces.forEach((e, k, list) => {
-      this.x += e.x;
-      this.y += e.y;
-      this.spr.x = this.x;
-      this.spr.y = this.y;
+      fx += e.x;
+      fy += e.y;
 
-      e.f -= this.weight;
+      const mag = e.getMagnitude() - this.weight;
 
-      if (e.f <= 0) list.splice(k, 1);
+      if (mag <= 0) {
+        list.splice(k, 1);
+      } else e.setMagnitude(mag);
     });
+
+    const newRect = this.GetRect();
+    newRect.x = this.x + fx;
+    newRect.y = this.y + fy;
+
+    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+
+    if (list.length == 0) {
+      this.x = this.spr.x += fx;
+      this.y = this.spr.y += fy;
+    } else {
+      list.forEach((e) => {
+        e.Move(fx, fy);
+      });
+    }
   }
 }
 
 class Game {
-  ship: GameObject;
+  player: GameObject;
   cursors: Phaser.CursorKeys;
   pad1: Phaser.SinglePad;
   map: Phaser.Tilemap;
@@ -103,8 +157,8 @@ class Game {
     this.game.load.spritesheet(
       "gamesprite",
       "assets/16x16_Jerom_CC-BY-SA-3.0.png",
-      16,
-      16,
+      TILE_SIZE,
+      TILE_SIZE,
       200
     );
 
@@ -142,8 +196,8 @@ class Game {
 
   createObj(obj) {
     if (obj.type == "player") {
-      this.ship = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1);
-      return this.ship;
+      this.player = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1);
+      return this.player;
     }
 
     let mapObj = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1);
@@ -170,7 +224,7 @@ class Game {
   }
 
   update() {
-    let playerSpeed = 64;
+    let playerSpeed = 10;
 
     if (this.pad1.connected) {
       let leftStickX = this.pad1.axis(Phaser.Gamepad.XBOX360_STICK_LEFT_X);
@@ -196,22 +250,22 @@ class Game {
     // @ts-ignore
     let speed = this.game.touchControl.speed;
     if (speed.x || speed.y) {
-      this.ship.spr.angle =
+      this.player.spr.angle =
         180 - (Math.atan2(speed.x, speed.y) * 180) / Math.PI;
 
-      this.ship.Move(-speed.x / 100, -speed.y / 100, 10);
+      this.player.Move(-speed.x / 100, -speed.y / 100);
     }
 
     if (this.cursors.left.isDown) {
-      this.ship.Move(-1, 0, 10);
+      this.player.Move(-1, 0);
     } else if (this.cursors.right.isDown) {
-      this.ship.Move(1, 0, 10);
+      this.player.Move(1, 0);
     }
 
     if (this.cursors.up.isDown) {
-      this.ship.Move(0, -1, 10);
+      this.player.Move(0, -1);
     } else if (this.cursors.down.isDown) {
-      this.ship.Move(0, 1, 10);
+      this.player.Move(0, 1);
     }
 
     GameObjectManager.Update();
