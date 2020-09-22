@@ -248,7 +248,8 @@ class Game {
     }
 
     // @ts-ignore
-    let speed = this.game.touchControl.speed;
+    const control = this.game.touchControl;
+    let speed = control.speed;
     if (speed.x || speed.y) {
       this.player.spr.angle =
         180 - (Math.atan2(speed.x, speed.y) * 180) / Math.PI;

@@ -185,7 +185,8 @@ var Game = /** @class */ (function () {
             //      console.log(Math.atan2(leftStickX, leftStickY) * 180 / Math.PI);
         }
         // @ts-ignore
-        var speed = this.game.touchControl.speed;
+        var control = this.game.touchControl;
+        var speed = control.speed;
         if (speed.x || speed.y) {
             this.player.spr.angle =
                 180 - (Math.atan2(speed.x, speed.y) * 180) / Math.PI;
