@@ -1,0 +1,40 @@
+# OS X
+.DS_Store*
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+*~
+
+
+# npm
+**/node_modules
+package-lock.json
+*.log
+*.gz
+
+
+# Coveralls
+coverage
+
+# Benchmarking
+benchmarks/graphs
+
+.env
+client/dist
+server/public_old
+action_origin
+index-dev.js
+.vscode
+
+
+*.js.map
+public/hofclone/javascripts/*.js
+
+whatap.conf

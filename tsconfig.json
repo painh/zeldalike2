@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+      "removeComments": false,
+      "preserveConstEnums": true,
+      "sourceMap": true,
+    //   "outDir": "../../../../public/hofclone/javascripts/"
+    }
+  }
+  
