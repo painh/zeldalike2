@@ -21,13 +21,14 @@ class GameObjectManager {
   static Init(game: Game) {
     GameObjectManager.game = game;
   }
-  static Add(sprX, sprY, frame): GameObject {
+  static Add(sprX, sprY, frame, weight): GameObject {
     const obj = new GameObject(
       GameObjectManager.game.game,
       sprX,
       sprY,
       GameObjectManager.sprName,
-      frame
+      frame,
+      weight
     );
     GameObjectManager.list.push(obj);
 
@@ -35,6 +36,7 @@ class GameObjectManager {
   }
 
   static Update() {
+    InputControl.Update();
     GameObjectManager.list.forEach((e) => {
       e.Update();
     });
@@ -72,7 +74,7 @@ class GameObject {
   forces: Vector[] = [];
   weight: number;
 
-  constructor(game: Phaser.Game, sprX, sprY, sprName, frame) {
+  constructor(game: Phaser.Game, sprX, sprY, sprName, frame, weight) {
     this.spr = game.add.sprite(sprX, sprY, sprName);
     this.spr.frame = frame;
     this.spr.anchor.set(0.5);
@@ -80,19 +82,22 @@ class GameObject {
     this.x = sprX;
     this.y = sprY;
 
-    this.weight = 10;
+    this.weight = weight;
+    console.log(this);
   }
 
   GetRect() {
     return {
       x: this.x,
       y: this.y,
-      width: TILE_SIZE - 5,
-      height: TILE_SIZE - 5,
+      width: TILE_SIZE - 2,
+      height: TILE_SIZE - 2,
     };
   }
 
   Move(x, y) {
+    if (this.weight == 255) return;
+
     this.forces.push(new Vector(x, y));
   }
 
@@ -132,7 +137,6 @@ class GameObject {
 
 class Game {
   player: GameObject;
-  cursors: Phaser.CursorKeys;
   pad1: Phaser.SinglePad;
   map: Phaser.Tilemap;
   game: Phaser.Game;
@@ -150,7 +154,7 @@ class Game {
   preload() {
     this.game.load.tilemap(
       "room1",
-      "assets/room1.json",
+      "assets/map.json",
       null,
       Phaser.Tilemap.TILED_JSON
     );
@@ -177,50 +181,51 @@ class Game {
 
     this.map = this.game.add.tilemap(name);
     this.map.addTilesetImage("16x16_Jerom_CC-BY-SA-3.0", "gamesprite");
-    let layer1 = this.map.createLayer("floor");
+    let layer1 = this.map.createLayer("base");
     layer1.resizeWorld();
-    this.map.setCollision(250, true, "collision");
+    // this.map.setCollision(250, true, "obj");
 
-    console.log(this.map);
+    console.log(this.map.objects);
     // this.game.physics.p2.convertTilemap(this.map, "collision");
 
     // @ts-ignore
-    if (this.map.objects.object) {
+    if (this.map.objects.objLayer) {
       // @ts-ignore
-      const objs = this.map.objects.object;
+      const objs = this.map.objects.objLayer;
       objs.forEach((obj) => {
+        if (obj.properties) {
+          obj.properties.forEach((e) => {
+            obj[e.name] = e.value;
+          });
+        }
         this.createObj(obj);
       });
     }
   }
 
   createObj(obj) {
+    console.log(obj);
     if (obj.type == "player") {
-      this.player = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1);
+      this.player = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1, 10);
       return this.player;
     }
 
-    let mapObj = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1);
+    let mapObj = GameObjectManager.Add(
+      obj.x,
+      obj.y,
+      obj.gid - 1,
+      obj.weight ? obj.weight : 10
+    );
     return mapObj;
   }
 
   create() {
-    // @ts-ignore
-    this.game.touchControl = this.game.plugins.add(Phaser.Plugin.TouchControl);
-    // @ts-ignore
-    this.game.touchControl.inputEnable();
-    // @ts-ignore
-    this.game.touchControl.settings.maxDistanceInPixels = 32;
-    // @ts-ignore
-    this.game.touchControl.setPos(50, 200);
-
     this.makeRoom("room1");
 
     this.game.input.gamepad.start();
     this.pad1 = this.game.input.gamepad.pad1;
-    console.log(this.pad1);
 
-    this.cursors = this.game.input.keyboard.createCursorKeys();
+    InputControl.Init(this.game);
   }
 
   update() {
@@ -231,41 +236,31 @@ class Game {
       let leftStickY = this.pad1.axis(Phaser.Gamepad.XBOX360_STICK_LEFT_Y);
 
       // if (leftStickX) {
-      //   this.ship.body.moveRight(leftStickX * playerSpeed);
-      //   this.ship.body.angle =
+      //   this.player.body.moveRight(leftStickX * playerSpeed);
+      //   this.player.body.angle =
       //     360 - (Math.atan2(leftStickX, leftStickY) * 180) / Math.PI;
       // }
 
       // if (leftStickY) {
-      //   this.ship.body.moveDown(leftStickY * playerSpeed);
-      //   this.ship.body.angle =
+      //   this.player.body.moveDown(leftStickY * playerSpeed);
+      //   this.player.body.angle =
       //     360 - (Math.atan2(leftStickX, leftStickY) * 180) / Math.PI;
       // }
 
-      //ship.body.angle += 10;
+      // this.player.body.angle += 10;
 
-      //      console.log(Math.atan2(leftStickX, leftStickY) * 180 / Math.PI);
+      console.log((Math.atan2(leftStickX, leftStickY) * 180) / Math.PI);
     }
 
-    // @ts-ignore
-    const control = this.game.touchControl;
-    let speed = control.speed;
-    if (speed.x || speed.y) {
-      this.player.spr.angle =
-        180 - (Math.atan2(speed.x, speed.y) * 180) / Math.PI;
-
-      this.player.Move(-speed.x / 100, -speed.y / 100);
-    }
-
-    if (this.cursors.left.isDown) {
+    if (InputControl.LeftDown()) {
       this.player.Move(-1, 0);
-    } else if (this.cursors.right.isDown) {
+    } else if (InputControl.RightDown()) {
       this.player.Move(1, 0);
     }
 
-    if (this.cursors.up.isDown) {
+    if (InputControl.UpDown()) {
       this.player.Move(0, -1);
-    } else if (this.cursors.down.isDown) {
+    } else if (InputControl.DownDown()) {
       this.player.Move(0, 1);
     }
 
