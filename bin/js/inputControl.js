@@ -3,12 +3,14 @@ var InputControl;
     var game = null;
     var cursors;
     var touchesDown = [];
+    var graphics;
+    var size = 25;
+    var startY = 160;
+    var startX = 0;
     function Init(g) {
         game = g;
-        var graphics = game.add.graphics(0, 0);
-        var size = 25;
-        var startY = 160;
-        var startX = 0;
+        startY = g.height - size * 3;
+        graphics = game.add.graphics(0, 0);
         var x = startX, y = startY;
         for (var i = 0; i < 9; i++) {
             if (i % 2) {
@@ -23,13 +25,16 @@ var InputControl;
                 x += size;
         }
         cursors = game.input.keyboard.createCursorKeys();
+        graphics.visible = game.input.pointer1.active;
+        console.log(game.input.pointer1);
     }
     InputControl.Init = Init;
     function Update() {
-        var size = 25;
-        var startY = 161;
-        var startX = 1;
         var x = startX, y = startY;
+        if (game.input.pointer1.isDown) {
+            if (!graphics.visible)
+                graphics.visible = true;
+        }
         for (var i = 0; i < 9; i++) {
             touchesDown[i] = false;
             if (i % 2) {

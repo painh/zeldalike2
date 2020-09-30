@@ -56,32 +56,15 @@ var GameObject = /** @class */ (function () {
         this.rect = STATIC_OBJ[name].rect;
         this.colRect = game.add.graphics(0, 0);
         this.colRect.lineStyle(1, 0x00ff00, 1);
-        this.colRect.drawRect(this.rect[0], this.rect[1], this.rect[2], this.rect[3]);
-        // this.colRect.lineStyle(1, 0x00ff00, 1);
-        // this.colRect.moveTo(STATIC_OBJ[name].rect[0], STATIC_OBJ[name].rect[1]);
-        // this.colRect.lineTo(STATIC_OBJ[name].rect[0], STATIC_OBJ[name].rect[3]);
-        // this.colRect.moveTo(STATIC_OBJ[name].rect[0], STATIC_OBJ[name].rect[1]);
-        // this.colRect.lineTo(STATIC_OBJ[name].rect[2], STATIC_OBJ[name].rect[1]);
-        // this.colRect.moveTo(STATIC_OBJ[name].rect[2], STATIC_OBJ[name].rect[1]);
-        // this.colRect.lineTo(STATIC_OBJ[name].rect[2], STATIC_OBJ[name].rect[3]);
-        // this.colRect.moveTo(STATIC_OBJ[name].rect[0], STATIC_OBJ[name].rect[3]);
-        // this.colRect.lineTo(STATIC_OBJ[name].rect[2], STATIC_OBJ[name].rect[3]);
-        // this.colRect.drawRect(
-        //   STATIC_OBJ[name].rect[0],
-        //   STATIC_OBJ[name].rect[1],
-        //   STATIC_OBJ[name].rect[2],
-        //   STATIC_OBJ[name].rect[3]
-        // );
-        this.colRect.x =
-            this.x - STATIC_OBJ[name].rect[2] / 2 + 0.5 - STATIC_OBJ[name].rect[0];
-        this.colRect.y =
-            this.y - STATIC_OBJ[name].rect[3] / 2 + 0.5 - STATIC_OBJ[name].rect[1];
+        this.colRect.drawRect(this.rect[0] + 0.5, this.rect[1] + 0.5, this.rect[2] - 1, this.rect[3] - 1);
+        this.colRect.x = this.x - TILE_SIZE / 2;
+        this.colRect.y = this.y - TILE_SIZE / 2;
         console.log(this);
     }
     GameObject.prototype.GetRect = function () {
         return {
-            x: this.x + this.rect[0],
-            y: this.y + this.rect[1],
+            x: this.x + STATIC_OBJ[this.name].rect[0],
+            y: this.y + STATIC_OBJ[this.name].rect[1],
             width: this.rect[2],
             height: this.rect[3]
         };
@@ -115,8 +98,8 @@ var GameObject = /** @class */ (function () {
         if (list.length == 0) {
             this.x = this.spr.x += fx;
             this.y = this.spr.y += fy;
-            this.colRect.x = this.x - Math.round(STATIC_OBJ[this.name].rect[2] / 2);
-            this.colRect.y = this.y - Math.round(STATIC_OBJ[this.name].rect[3] / 2);
+            this.colRect.x = this.x - TILE_SIZE / 2;
+            this.colRect.y = this.y - TILE_SIZE / 2;
         }
         else {
             list.forEach(function (e) {

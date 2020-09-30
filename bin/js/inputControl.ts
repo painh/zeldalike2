@@ -2,14 +2,19 @@ namespace InputControl {
   let game: Phaser.Game = null;
   let cursors: Phaser.CursorKeys;
   let touchesDown = [];
+  let graphics: Phaser.Graphics;
+
+  const size = 25;
+  let startY = 160;
+  const startX = 0;
+
   export function Init(g: Phaser.Game) {
     game = g;
 
-    const graphics = game.add.graphics(0, 0);
+    startY = g.height - size * 3;
 
-    const size = 25;
-    const startY = 160;
-    const startX = 0;
+    graphics = game.add.graphics(0, 0);
+
     let x = startX,
       y = startY;
     for (let i = 0; i < 9; i++) {
@@ -24,14 +29,18 @@ namespace InputControl {
     }
 
     cursors = game.input.keyboard.createCursorKeys();
+
+    graphics.visible = game.input.pointer1.active;
+    console.log(game.input.pointer1);
   }
 
   export function Update() {
-    const size = 25;
-    const startY = 161;
-    const startX = 1;
     let x = startX,
       y = startY;
+
+    if (game.input.pointer1.isDown) {
+      if (!graphics.visible) graphics.visible = true;
+    }
 
     for (let i = 0; i < 9; i++) {
       touchesDown[i] = false;
