@@ -56,14 +56,8 @@
                  "height":16,
                  "id":7,
                  "name":"",
-                 "properties":[
-                        {
-                         "name":"weight",
-                         "type":"string",
-                         "value":"255"
-                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"tree",
                  "visible":true,
                  "width":16,
                  "x":160,

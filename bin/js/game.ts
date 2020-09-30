@@ -1,58 +1,5 @@
 const TILE_SIZE = 16;
 
-function CheckCollision(r1, r2) {
-  if (
-    r1.x < r2.x + r2.width &&
-    r1.x + r1.width > r2.x &&
-    r1.y < r2.y + r2.height &&
-    r1.y + r1.height > r2.y
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-class GameObjectManager {
-  static list: GameObject[] = [];
-  static game: Game;
-  static sprName: string = "gamesprite";
-
-  static Init(game: Game) {
-    GameObjectManager.game = game;
-  }
-  static Add(sprX, sprY, frame, weight): GameObject {
-    const obj = new GameObject(
-      GameObjectManager.game.game,
-      sprX,
-      sprY,
-      GameObjectManager.sprName,
-      frame,
-      weight
-    );
-    GameObjectManager.list.push(obj);
-
-    return obj;
-  }
-
-  static Update() {
-    InputControl.Update();
-    GameObjectManager.list.forEach((e) => {
-      e.Update();
-    });
-  }
-
-  static CheckCollision(checkRect: any, me: GameObject): GameObject[] {
-    const list = [];
-    this.list.forEach((e) => {
-      if (e == me) return;
-      if (CheckCollision(checkRect, e.GetRect())) list.push(e);
-    });
-
-    return list;
-  }
-}
-
 class Force {
   x: number;
   y: number;
@@ -64,77 +11,6 @@ class Force {
   }
 }
 
-class GameObject {
-  x: number;
-  y: number;
-  spd: number;
-  tx: number;
-  ty: number;
-  spr: Phaser.Sprite;
-  forces: Vector[] = [];
-  weight: number;
-
-  constructor(game: Phaser.Game, sprX, sprY, sprName, frame, weight) {
-    this.spr = game.add.sprite(sprX, sprY, sprName);
-    this.spr.frame = frame;
-    this.spr.anchor.set(0.5);
-    this.spr.smoothed = false;
-    this.x = sprX;
-    this.y = sprY;
-
-    this.weight = weight;
-    console.log(this);
-  }
-
-  GetRect() {
-    return {
-      x: this.x,
-      y: this.y,
-      width: TILE_SIZE - 2,
-      height: TILE_SIZE - 2,
-    };
-  }
-
-  Move(x, y) {
-    if (this.weight == 255) return;
-
-    this.forces.push(new Vector(x, y));
-  }
-
-  Update() {
-    let fx = 0;
-    let fy = 0;
-    let allf = 0;
-    if (this.forces.length == 0) return;
-
-    this.forces.forEach((e, k, list) => {
-      fx += e.x;
-      fy += e.y;
-
-      const mag = e.getMagnitude() - this.weight;
-
-      if (mag <= 0) {
-        list.splice(k, 1);
-      } else e.setMagnitude(mag);
-    });
-
-    const newRect = this.GetRect();
-    newRect.x = this.x + fx;
-    newRect.y = this.y + fy;
-
-    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-
-    if (list.length == 0) {
-      this.x = this.spr.x += fx;
-      this.y = this.spr.y += fy;
-    } else {
-      list.forEach((e) => {
-        e.Move(fx, fy);
-      });
-    }
-  }
-}
-
 class Game {
   player: GameObject;
   pad1: Phaser.SinglePad;
@@ -143,7 +19,8 @@ class Game {
 
   constructor() {
     GameObjectManager.Init(this);
-    this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
+    // this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
+    this.game = new Phaser.Game(256, 16 * 10, Phaser.CANVAS, "game", {
       preload: () => this.preload(),
       init: () => this.init(),
       create: () => this.create(),
@@ -206,16 +83,11 @@ class Game {
   createObj(obj) {
     console.log(obj);
     if (obj.type == "player") {
-      this.player = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1, 10);
+      this.player = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
       return this.player;
     }
 
-    let mapObj = GameObjectManager.Add(
-      obj.x,
-      obj.y,
-      obj.gid - 1,
-      obj.weight ? obj.weight : 10
-    );
+    let mapObj = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
     return mapObj;
   }
 

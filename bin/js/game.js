@@ -1,44 +1,4 @@
 var TILE_SIZE = 16;
-function CheckCollision(r1, r2) {
-    if (r1.x < r2.x + r2.width &&
-        r1.x + r1.width > r2.x &&
-        r1.y < r2.y + r2.height &&
-        r1.y + r1.height > r2.y) {
-        return true;
-    }
-    return false;
-}
-var GameObjectManager = /** @class */ (function () {
-    function GameObjectManager() {
-    }
-    GameObjectManager.Init = function (game) {
-        GameObjectManager.game = game;
-    };
-    GameObjectManager.Add = function (sprX, sprY, frame, weight) {
-        var obj = new GameObject(GameObjectManager.game.game, sprX, sprY, GameObjectManager.sprName, frame, weight);
-        GameObjectManager.list.push(obj);
-        return obj;
-    };
-    GameObjectManager.Update = function () {
-        InputControl.Update();
-        GameObjectManager.list.forEach(function (e) {
-            e.Update();
-        });
-    };
-    GameObjectManager.CheckCollision = function (checkRect, me) {
-        var list = [];
-        this.list.forEach(function (e) {
-            if (e == me)
-                return;
-            if (CheckCollision(checkRect, e.GetRect()))
-                list.push(e);
-        });
-        return list;
-    };
-    GameObjectManager.list = [];
-    GameObjectManager.sprName = "gamesprite";
-    return GameObjectManager;
-}());
 var Force = /** @class */ (function () {
     function Force(x, y, f) {
         this.x = x;
@@ -47,69 +7,12 @@ var Force = /** @class */ (function () {
     }
     return Force;
 }());
-var GameObject = /** @class */ (function () {
-    function GameObject(game, sprX, sprY, sprName, frame, weight) {
-        this.forces = [];
-        this.spr = game.add.sprite(sprX, sprY, sprName);
-        this.spr.frame = frame;
-        this.spr.anchor.set(0.5);
-        this.spr.smoothed = false;
-        this.x = sprX;
-        this.y = sprY;
-        this.weight = weight;
-        console.log(this);
-    }
-    GameObject.prototype.GetRect = function () {
-        return {
-            x: this.x,
-            y: this.y,
-            width: TILE_SIZE - 2,
-            height: TILE_SIZE - 2
-        };
-    };
-    GameObject.prototype.Move = function (x, y) {
-        if (this.weight == 255)
-            return;
-        this.forces.push(new Vector(x, y));
-    };
-    GameObject.prototype.Update = function () {
-        var _this = this;
-        var fx = 0;
-        var fy = 0;
-        var allf = 0;
-        if (this.forces.length == 0)
-            return;
-        this.forces.forEach(function (e, k, list) {
-            fx += e.x;
-            fy += e.y;
-            var mag = e.getMagnitude() - _this.weight;
-            if (mag <= 0) {
-                list.splice(k, 1);
-            }
-            else
-                e.setMagnitude(mag);
-        });
-        var newRect = this.GetRect();
-        newRect.x = this.x + fx;
-        newRect.y = this.y + fy;
-        var list = GameObjectManager.CheckCollision(newRect, this);
-        if (list.length == 0) {
-            this.x = this.spr.x += fx;
-            this.y = this.spr.y += fy;
-        }
-        else {
-            list.forEach(function (e) {
-                e.Move(fx, fy);
-            });
-        }
-    };
-    return GameObject;
-}());
 var Game = /** @class */ (function () {
     function Game() {
         var _this = this;
         GameObjectManager.Init(this);
-        this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
+        // this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
+        this.game = new Phaser.Game(256, 16 * 10, Phaser.CANVAS, "game", {
             preload: function () { return _this.preload(); },
             init: function () { return _this.init(); },
             create: function () { return _this.create(); },
@@ -155,10 +58,10 @@ var Game = /** @class */ (function () {
     Game.prototype.createObj = function (obj) {
         console.log(obj);
         if (obj.type == "player") {
-            this.player = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1, 10);
+            this.player = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
             return this.player;
         }
-        var mapObj = GameObjectManager.Add(obj.x, obj.y, obj.gid - 1, obj.weight ? obj.weight : 10);
+        var mapObj = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
         return mapObj;
     };
     Game.prototype.create = function () {

@@ -7,13 +7,13 @@ var InputControl;
         game = g;
         var graphics = game.add.graphics(0, 0);
         var size = 25;
-        var startY = 161;
-        var startX = 1;
+        var startY = 160;
+        var startX = 0;
         var x = startX, y = startY;
         for (var i = 0; i < 9; i++) {
             if (i % 2) {
                 graphics.lineStyle(1, 0x00ff00, 1.0);
-                graphics.drawRect(x, y, size, size);
+                graphics.drawRect(x + 0.5, y + 0.5, size, size);
             }
             if (i > 0 && (i + 1) % 3 == 0) {
                 x = startX;
