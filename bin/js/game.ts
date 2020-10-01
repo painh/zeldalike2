@@ -126,14 +126,28 @@ class Game {
 
     if (InputControl.LeftDown()) {
       this.player.Move(-1, 0);
+      this.player.SetDir(DIR.LEFT);
     } else if (InputControl.RightDown()) {
       this.player.Move(1, 0);
+      this.player.SetDir(DIR.RIGHT);
     }
 
     if (InputControl.UpDown()) {
       this.player.Move(0, -1);
+      this.player.SetDir(DIR.UP);
     } else if (InputControl.DownDown()) {
       this.player.Move(0, 1);
+      this.player.SetDir(DIR.DOWN);
+    }
+
+    if (InputControl.JustDown("Z")) {
+      const attack: GameObject = GameObjectManager.Add(
+        this.player.x,
+        this.player.y,
+        "playerAttack",
+        0
+      );
+      attack.lifeTimeMS = 1000;
     }
 
     GameObjectManager.Update();

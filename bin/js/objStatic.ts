@@ -13,4 +13,9 @@ const STATIC_OBJ = {
     weight: 255,
     rect: [0, 0, 16, 16],
   },
+
+  playerAttack: {
+    weight: 255,
+    rect: [0, 0, 16, 16],
+  },
 };

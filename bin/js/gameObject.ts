@@ -38,8 +38,12 @@ class GameObjectManager {
 
   static Update() {
     InputControl.Update();
-    GameObjectManager.list.forEach((e) => {
+    GameObjectManager.list.forEach((e, k, list) => {
       e.Update();
+      if (e.isDead) {
+        e.Release();
+        list.splice(k, 1);
+      }
     });
   }
 
@@ -54,6 +58,18 @@ class GameObjectManager {
   }
 }
 
+const enum DIR {
+  DOWN = 0,
+  LEFT = 1,
+  UP = 2,
+  RIGHT = 3,
+}
+
+const enum OBJ_STATE {
+  IDLE = 0,
+  ATTACK = 1,
+}
+
 class GameObject {
   x: number;
   y: number;
@@ -66,6 +82,11 @@ class GameObject {
   weight: number;
   rect: number[] = [];
   name: string;
+  createAt: number;
+  lifeTimeMS: number = 0;
+  isDead: boolean = false;
+  dir: DIR = DIR.DOWN;
+  state: OBJ_STATE = OBJ_STATE.IDLE;
 
   constructor(
     game: Phaser.Game,
@@ -90,7 +111,10 @@ class GameObject {
     this.weight = STATIC_OBJ[name].weight;
     this.rect = STATIC_OBJ[name].rect;
 
-    this.colRect = game.add.graphics(0, 0);
+    this.colRect = game.add.graphics(
+      this.x - TILE_SIZE / 2,
+      this.y - TILE_SIZE / 2
+    );
     this.colRect.lineStyle(1, 0x00ff00, 1);
 
     this.colRect.drawRect(
@@ -100,10 +124,27 @@ class GameObject {
       this.rect[3] - 1
     );
 
-    this.colRect.x = this.x - TILE_SIZE / 2;
-    this.colRect.y = this.y - TILE_SIZE / 2;
+    this.createAt = Date.now();
 
     console.log(this);
+  }
+
+  Release() {
+    this.spr.destroy();
+    this.colRect.destroy();
+  }
+
+  SetDir(dir: DIR) {
+    switch (dir) {
+      case DIR.DOWN:
+        return (this.spr.angle = 0);
+      case DIR.LEFT:
+        return (this.spr.angle = 90);
+      case DIR.UP:
+        return (this.spr.angle = -90);
+      case DIR.RIGHT:
+        return (this.spr.angle = 180);
+    }
   }
 
   GetRect() {
@@ -122,6 +163,15 @@ class GameObject {
   }
 
   Update() {
+    if (this.isDead) {
+      return;
+    }
+    if (this.lifeTimeMS != 0) {
+      if (Date.now() - this.createAt >= this.lifeTimeMS) {
+        this.isDead = true;
+        return true;
+      }
+    }
     let fx = 0;
     let fy = 0;
     let allf = 0;
@@ -157,3 +207,5 @@ class GameObject {
     }
   }
 }
+
+class Player {}

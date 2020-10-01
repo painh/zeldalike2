@@ -90,15 +90,23 @@ var Game = /** @class */ (function () {
         }
         if (InputControl.LeftDown()) {
             this.player.Move(-1, 0);
+            this.player.SetDir(1 /* LEFT */);
         }
         else if (InputControl.RightDown()) {
             this.player.Move(1, 0);
+            this.player.SetDir(3 /* RIGHT */);
         }
         if (InputControl.UpDown()) {
             this.player.Move(0, -1);
+            this.player.SetDir(2 /* UP */);
         }
         else if (InputControl.DownDown()) {
             this.player.Move(0, 1);
+            this.player.SetDir(0 /* DOWN */);
+        }
+        if (InputControl.JustDown("Z")) {
+            var attack = GameObjectManager.Add(this.player.x, this.player.y, "playerAttack", 0);
+            attack.lifeTimeMS = 1000;
         }
         GameObjectManager.Update();
     };

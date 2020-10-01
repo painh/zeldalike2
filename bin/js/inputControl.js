@@ -4,6 +4,7 @@ var InputControl;
     var cursors;
     var touchesDown = [];
     var graphics;
+    var keys = [];
     var size = 25;
     var startY = 160;
     var startX = 0;
@@ -26,6 +27,8 @@ var InputControl;
         }
         cursors = game.input.keyboard.createCursorKeys();
         graphics.visible = game.input.pointer1.active;
+        keys["Z"] = game.input.keyboard.addKey(Phaser.KeyCode.Z);
+        keys["X"] = game.input.keyboard.addKey(Phaser.KeyCode.X);
         console.log(game.input.pointer1);
     }
     InputControl.Init = Init;
@@ -91,5 +94,17 @@ var InputControl;
         return false;
     }
     InputControl.DownDown = DownDown;
+    function Down(code) {
+        if (keys[code].isDown)
+            return true;
+        return false;
+    }
+    InputControl.Down = Down;
+    function JustDown(code) {
+        if (keys[code].justDown)
+            return true;
+        return false;
+    }
+    InputControl.JustDown = JustDown;
 })(InputControl || (InputControl = {}));
 //# sourceMappingURL=inputControl.js.map

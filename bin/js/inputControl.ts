@@ -3,6 +3,7 @@ namespace InputControl {
   let cursors: Phaser.CursorKeys;
   let touchesDown = [];
   let graphics: Phaser.Graphics;
+  let keys: Phaser.Key[] = [];
 
   const size = 25;
   let startY = 160;
@@ -31,6 +32,10 @@ namespace InputControl {
     cursors = game.input.keyboard.createCursorKeys();
 
     graphics.visible = game.input.pointer1.active;
+
+    keys["Z"] = game.input.keyboard.addKey(Phaser.KeyCode.Z);
+    keys["X"] = game.input.keyboard.addKey(Phaser.KeyCode.X);
+
     console.log(game.input.pointer1);
   }
 
@@ -85,9 +90,20 @@ namespace InputControl {
     if (touchesDown[1]) return true;
     return false;
   }
+
   export function DownDown() {
     if (cursors.down.isDown) return true;
     if (touchesDown[7]) return true;
+    return false;
+  }
+
+  export function Down(code: string) {
+    if (keys[code].isDown) return true;
+    return false;
+  }
+
+  export function JustDown(code: string) {
+    if (keys[code].justDown) return true;
     return false;
   }
 }

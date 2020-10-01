@@ -20,8 +20,12 @@ var GameObjectManager = /** @class */ (function () {
     };
     GameObjectManager.Update = function () {
         InputControl.Update();
-        GameObjectManager.list.forEach(function (e) {
+        GameObjectManager.list.forEach(function (e, k, list) {
             e.Update();
+            if (e.isDead) {
+                e.Release();
+                list.splice(k, 1);
+            }
         });
     };
     GameObjectManager.CheckCollision = function (checkRect, me) {
@@ -38,10 +42,26 @@ var GameObjectManager = /** @class */ (function () {
     GameObjectManager.sprName = "gamesprite";
     return GameObjectManager;
 }());
+var DIR;
+(function (DIR) {
+    DIR[DIR["DOWN"] = 0] = "DOWN";
+    DIR[DIR["LEFT"] = 1] = "LEFT";
+    DIR[DIR["UP"] = 2] = "UP";
+    DIR[DIR["RIGHT"] = 3] = "RIGHT";
+})(DIR || (DIR = {}));
+var OBJ_STATE;
+(function (OBJ_STATE) {
+    OBJ_STATE[OBJ_STATE["IDLE"] = 0] = "IDLE";
+    OBJ_STATE[OBJ_STATE["ATTACK"] = 1] = "ATTACK";
+})(OBJ_STATE || (OBJ_STATE = {}));
 var GameObject = /** @class */ (function () {
     function GameObject(game, objX, objY, name, frame) {
         this.forces = [];
         this.rect = [];
+        this.lifeTimeMS = 0;
+        this.isDead = false;
+        this.dir = 0 /* DOWN */;
+        this.state = 0 /* IDLE */;
         this.name = name;
         this.spr = game.add.sprite(objX, objY, GameObjectManager.sprName);
         this.spr.frame = frame;
@@ -54,13 +74,28 @@ var GameObject = /** @class */ (function () {
         }
         this.weight = STATIC_OBJ[name].weight;
         this.rect = STATIC_OBJ[name].rect;
-        this.colRect = game.add.graphics(0, 0);
+        this.colRect = game.add.graphics(this.x - TILE_SIZE / 2, this.y - TILE_SIZE / 2);
         this.colRect.lineStyle(1, 0x00ff00, 1);
         this.colRect.drawRect(this.rect[0] + 0.5, this.rect[1] + 0.5, this.rect[2] - 1, this.rect[3] - 1);
-        this.colRect.x = this.x - TILE_SIZE / 2;
-        this.colRect.y = this.y - TILE_SIZE / 2;
+        this.createAt = Date.now();
         console.log(this);
     }
+    GameObject.prototype.Release = function () {
+        this.spr.destroy();
+        this.colRect.destroy();
+    };
+    GameObject.prototype.SetDir = function (dir) {
+        switch (dir) {
+            case 0 /* DOWN */:
+                return (this.spr.angle = 0);
+            case 1 /* LEFT */:
+                return (this.spr.angle = 90);
+            case 2 /* UP */:
+                return (this.spr.angle = -90);
+            case 3 /* RIGHT */:
+                return (this.spr.angle = 180);
+        }
+    };
     GameObject.prototype.GetRect = function () {
         return {
             x: this.x + STATIC_OBJ[this.name].rect[0],
@@ -76,6 +111,15 @@ var GameObject = /** @class */ (function () {
     };
     GameObject.prototype.Update = function () {
         var _this = this;
+        if (this.isDead) {
+            return;
+        }
+        if (this.lifeTimeMS != 0) {
+            if (Date.now() - this.createAt >= this.lifeTimeMS) {
+                this.isDead = true;
+                return true;
+            }
+        }
         var fx = 0;
         var fy = 0;
         var allf = 0;
@@ -108,5 +152,10 @@ var GameObject = /** @class */ (function () {
         }
     };
     return GameObject;
+}());
+var Player = /** @class */ (function () {
+    function Player() {
+    }
+    return Player;
 }());
 //# sourceMappingURL=gameObject.js.map

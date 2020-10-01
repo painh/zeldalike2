@@ -10,6 +10,10 @@ var STATIC_OBJ = {
     tree: {
         weight: 255,
         rect: [0, 0, 16, 16]
+    },
+    playerAttack: {
+        weight: 255,
+        rect: [0, 0, 16, 16]
     }
 };
 //# sourceMappingURL=objStatic.js.map
