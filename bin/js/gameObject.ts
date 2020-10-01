@@ -274,7 +274,7 @@ class GameObject {
       e.AddForce(fx, fy, this, "checkCollision", false);
       if (!e.Moveable()) {
         moveable = false;
-        console.log(`${this.name} -> ${e.name} cant!`);
+        // console.log(`${this.name} -> ${e.name} cant!`);
       }
     });
 
@@ -294,5 +294,3 @@ class GameObject {
     this.force.setMagnitude(mag);
   }
 }
-
-class Player {}

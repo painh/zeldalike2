@@ -211,7 +211,7 @@ var GameObject = /** @class */ (function () {
             e.AddForce(fx, fy, _this, "checkCollision", false);
             if (!e.Moveable()) {
                 moveable = false;
-                console.log(_this.name + " -> " + e.name + " cant!");
+                // console.log(`${this.name} -> ${e.name} cant!`);
             }
         });
         if (moveable) {
