@@ -1,19 +1,19 @@
 var InputControl;
 (function (InputControl) {
-    var game = null;
-    var cursors;
-    var touchesDown = [];
-    var graphics;
-    var keys = [];
-    var size = 25;
-    var startY = 160;
-    var startX = 0;
+    let game = null;
+    let cursors;
+    let touchesDown = [];
+    let graphics;
+    let keys = [];
+    const size = 25;
+    let startY = 160;
+    const startX = 0;
     function Init(g) {
         game = g;
         startY = g.height - size * 3;
         graphics = game.add.graphics(0, 0);
-        var x = startX, y = startY;
-        for (var i = 0; i < 9; i++) {
+        let x = startX, y = startY;
+        for (let i = 0; i < 9; i++) {
             if (i % 2) {
                 graphics.lineStyle(1, 0x00ff00, 1.0);
                 graphics.drawRect(x + 0.5, y + 0.5, size, size);
@@ -33,12 +33,12 @@ var InputControl;
     }
     InputControl.Init = Init;
     function Update() {
-        var x = startX, y = startY;
+        let x = startX, y = startY;
         if (game.input.pointer1.isDown) {
             if (!graphics.visible)
                 graphics.visible = true;
         }
-        for (var i = 0; i < 9; i++) {
+        for (let i = 0; i < 9; i++) {
             touchesDown[i] = false;
             if (i % 2) {
                 if (game.input.x >= x &&

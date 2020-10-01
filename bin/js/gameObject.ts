@@ -17,14 +17,17 @@ class GameObjectManager {
   static checkedList = [];
 
   static MakeKey(obj1: GameObject, obj2: GameObject) {
-    let less, greater;
-    if (obj1.idx < obj2.idx) {
-      less = obj1.idx;
-      greater = obj2.idx;
-    } else {
-      less = obj2.idx;
-      greater = obj1.idx;
-    }
+    // let less, greater;
+    // if (obj1.idx < obj2.idx) {
+    //   less = obj1.idx;
+    //   greater = obj2.idx;
+    // } else {
+    //   less = obj2.idx;
+    //   greater = obj1.idx;
+    // }
+
+    const less = obj1.idx;
+    const greater = obj2.idx;
 
     return `${less}-${greater}`;
   }
@@ -63,13 +66,69 @@ class GameObjectManager {
   static Update() {
     GameObjectManager.checkedList = [];
     InputControl.Update();
+
+    let moveList = [];
     GameObjectManager.list.forEach((e, k, list) => {
       e.Update();
       if (e.isDead) {
         e.Release();
         list.splice(k, 1);
+      } else {
+        moveList.push(e);
       }
     });
+
+    let cnt = 0;
+    while (cnt < 10) {
+      cnt++;
+      moveList.forEach((srcObj, k, objList) => {
+        let fx = srcObj.force.x;
+        let fy = srcObj.force.y;
+        if (fx == 0 && fy == 0) return;
+        const newRect = srcObj.GetRect(fx, fy);
+        const colList: GameObject[] = GameObjectManager.CheckCollision(
+          newRect,
+          srcObj
+        );
+        colList.forEach((targetObj) => {
+          if (GameObjectManager.CollisionChecked(targetObj, srcObj)) return;
+          GameObjectManager.RegisterCollisionChecked(targetObj, srcObj);
+          targetObj.AddForce(fx, fy, srcObj, "checkCollision", false);
+        });
+        if (colList.length == 0) {
+          srcObj.x = srcObj.spr.x += fx;
+          srcObj.y = srcObj.spr.y += fy;
+          objList.splice(k, 1);
+        }
+      });
+
+      if (moveList.length == 0) break;
+
+      // if (GameObjectManager.CheckMoveDone()) cnt = 99;
+    }
+
+    GameObjectManager.list.forEach((gameObj) => {
+      const thismag = gameObj.force.getMagnitude();
+      let mag: number = thismag - gameObj.weight;
+
+      gameObj.colRect.x = Math.round(gameObj.x - TILE_SIZE / 2);
+      gameObj.colRect.y = Math.round(gameObj.y - TILE_SIZE / 2);
+
+      if (mag <= 0.5) {
+        mag = 0;
+      }
+      gameObj.force.setMagnitude(mag);
+    });
+  }
+
+  static CheckMoveDone() {
+    let done = true;
+    GameObjectManager.list.forEach((e) => {
+      if (!done) return;
+      if (!e.MoveDoneThisFrame()) done = false;
+    });
+
+    return done;
   }
 
   static CheckCollision(checkRect: any, me: GameObject): GameObject[] {
@@ -226,8 +285,6 @@ class GameObject {
   Moveable(): boolean {
     if (this.weight == 255) return false;
 
-    const thismag = this.force.getMagnitude();
-
     let fx = this.force.x;
     let fy = this.force.y;
 
@@ -235,7 +292,34 @@ class GameObject {
 
     const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
 
-    return list.length == 0;
+    if (list.length == 0) return true;
+    let moveable = true;
+    list.forEach((e) => {
+      if (e.weight == 255) moveable = false;
+    });
+
+    return moveable;
+  }
+
+  MoveDoneThisFrame(): boolean {
+    if (this.weight == 255) return true;
+
+    let fx = this.force.x;
+    let fy = this.force.y;
+
+    if (fx == 0 || fy == 0) return true;
+
+    const newRect = this.GetRect(fx, fy);
+
+    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+
+    if (list.length == 0) return true;
+    let moveable = true;
+    list.forEach((e) => {
+      if (e.weight == 255) moveable = false;
+    });
+
+    return moveable;
   }
 
   Update() {
@@ -258,39 +342,39 @@ class GameObject {
       this.state = OBJ_STATE.MOVE;
     }
 
-    let fx = this.force.x;
-    let fy = this.force.y;
-    let mag: number = thismag - this.weight;
+    // let fx = this.force.x;
+    // let fy = this.force.y;
+    // let mag: number = thismag - this.weight;
 
-    const newRect = this.GetRect(fx, fy);
+    // const newRect = this.GetRect(fx, fy);
 
-    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-    let moveable = true;
+    // const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+    // let moveable = true;
 
-    list.forEach((e) => {
-      if (GameObjectManager.CollisionChecked(e, this)) return;
-      GameObjectManager.RegisterCollisionChecked(e, this);
+    // list.forEach((e) => {
+    //   if (GameObjectManager.CollisionChecked(e, this)) return;
+    //   GameObjectManager.RegisterCollisionChecked(e, this);
 
-      e.AddForce(fx, fy, this, "checkCollision", false);
-      if (!e.Moveable()) {
-        moveable = false;
-        // console.log(`${this.name} -> ${e.name} cant!`);
-      }
-    });
+    //   e.AddForce(fx, fy, this, "checkCollision", false);
+    //   if (!e.Moveable()) {
+    //     moveable = false;
+    //     // console.log(`${this.name} -> ${e.name} cant!`);
+    //   }
+    // });
 
-    if (moveable) {
-      this.x = this.spr.x += fx;
-      this.y = this.spr.y += fy;
+    // if (moveable) {
+    //   this.x = this.spr.x += fx;
+    //   this.y = this.spr.y += fy;
 
-      this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
-      this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
-      this.state = OBJ_STATE.MOVE;
-    }
+    //   this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
+    //   this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
+    //   this.state = OBJ_STATE.MOVE;
+    // }
 
-    if (mag <= 0.5) {
-      mag = 0;
-    }
+    // if (mag <= 0.5) {
+    //   mag = 0;
+    // }
 
-    this.force.setMagnitude(mag);
+    // this.force.setMagnitude(mag);
   }
 }

@@ -1,12 +1,12 @@
 var SoundManager;
 (function (SoundManager) {
-    var ininted = false;
+    let ininted = false;
     function Init(soundList) {
         if (ininted) {
             console.log("sound manager init skip");
             return;
         }
-        soundList.forEach(function (e) {
+        soundList.forEach((e) => {
             createjs.Sound.registerSound(soundList.id, soundList.path);
         });
         console.log("sound manager init finished");

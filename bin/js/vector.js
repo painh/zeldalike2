@@ -1,90 +1,89 @@
 //https://gist.github.com/jjgrainger/808640fcb5764cf92c3cad960682c677
 //thanks
-var Vector = /** @class */ (function () {
-    function Vector(x, y) {
+class Vector {
+    constructor(x, y) {
         this.x = 0;
         this.y = 0;
         this.x = x || 0;
         this.y = y || 0;
     }
     // return the angle of the vector in radians
-    Vector.prototype.getDirection = function () {
+    getDirection() {
         return Math.atan2(this.y, this.x);
-    };
+    }
     // set the direction of the vector in radians
-    Vector.prototype.setDirection = function (direction) {
+    setDirection(direction) {
         var magnitude = this.getMagnitude();
         this.x = Math.cos(direction) * magnitude;
         this.y = Math.sin(direction) * magnitude;
-    };
+    }
     // get the magnitude of the vector
-    Vector.prototype.getMagnitude = function () {
+    getMagnitude() {
         // use pythagoras theorem to work out the magnitude of the vector
         return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
+    }
     // set the magnitude of the vector
-    Vector.prototype.setMagnitude = function (magnitude) {
+    setMagnitude(magnitude) {
         var direction = this.getDirection();
         this.x = Math.cos(direction) * magnitude;
         this.y = Math.sin(direction) * magnitude;
-    };
+    }
     // add two vectors together and return a new one
-    Vector.prototype.add = function (v2) {
+    add(v2) {
         return new Vector(this.x + v2.x, this.y + v2.y);
-    };
+    }
     // add a vector to this one
-    Vector.prototype.addTo = function (v2) {
+    addTo(v2) {
         this.x += v2.x;
         this.y += v2.y;
-    };
+    }
     // subtract two vectors and reutn a new one
-    Vector.prototype.subtract = function (v2) {
+    subtract(v2) {
         return new Vector(this.x - v2.x, this.y - v2.y);
-    };
+    }
     // subtract a vector from this one
-    Vector.prototype.subtractFrom = function (v2) {
+    subtractFrom(v2) {
         this.x -= v2.x;
         this.y -= v2.y;
-    };
+    }
     // multiply this vector by a scalar and return a new one
-    Vector.prototype.multiply = function (scalar) {
+    multiply(scalar) {
         return new Vector(this.x * scalar, this.y * scalar);
-    };
+    }
     // multiply this vector by the scalar
-    Vector.prototype.multiplyBy = function (scalar) {
+    multiplyBy(scalar) {
         this.x *= scalar;
         this.y *= scalar;
-    };
+    }
     // scale this vector by scalar and return a new vector
-    Vector.prototype.divide = function (scalar) {
+    divide(scalar) {
         return new Vector(this.x / scalar, this.y / scalar);
-    };
+    }
     // scale this vector by scalar
-    Vector.prototype.divideBy = function (scalar) {
+    divideBy(scalar) {
         this.x /= scalar;
         this.y /= scalar;
-    };
+    }
     // Utilities
-    Vector.prototype.copy = function () {
+    copy() {
         return new Vector(this.x, this.y);
-    };
-    Vector.prototype.toString = function () {
+    }
+    toString() {
         return "x: " + this.x + ", y: " + this.y;
-    };
-    Vector.prototype.toArray = function () {
+    }
+    toArray() {
         return [this.x, this.y];
-    };
-    Vector.prototype.toObject = function () {
+    }
+    toObject() {
         return { x: this.x, y: this.y };
-    };
+    }
     // dot product of two vectors
-    Vector.prototype.dotProduct = function (v2) {
+    dotProduct(v2) {
         return this.x * v2.x + this.y * v2.y;
-    };
+    }
     // normalize a given vector
-    Vector.prototype.normalize = function () {
+    normalize() {
         return new Vector(this.x / Math.sqrt(this.x * this.x + this.y * this.y), this.y / Math.sqrt(this.x * this.x + this.y * this.y));
-    };
-    return Vector;
-}());
+    }
+}
 //# sourceMappingURL=vector.js.map
