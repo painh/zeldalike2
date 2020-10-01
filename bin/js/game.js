@@ -85,19 +85,19 @@ var Game = /** @class */ (function () {
         // if (this.player.state == OBJ_STATE.IDLE)
         {
             if (InputControl.LeftDown()) {
-                this.player.AddForce(-1, 0, this.player, "keydown");
+                this.player.AddForce(-1, 0, this.player, "keydown", true);
                 this.player.SetDir(1 /* LEFT */);
             }
             else if (InputControl.RightDown()) {
-                this.player.AddForce(1, 0, this.player, "keydown");
+                this.player.AddForce(1, 0, this.player, "keydown", true);
                 this.player.SetDir(3 /* RIGHT */);
             }
             if (InputControl.UpDown()) {
-                this.player.AddForce(0, -1, this.player, "keydown");
+                this.player.AddForce(0, -1, this.player, "keydown", true);
                 this.player.SetDir(2 /* UP */);
             }
             else if (InputControl.DownDown()) {
-                this.player.AddForce(0, 1, this.player, "keydown");
+                this.player.AddForce(0, 1, this.player, "keydown", true);
                 this.player.SetDir(0 /* DOWN */);
             }
             if (InputControl.JustDown("Z")) {

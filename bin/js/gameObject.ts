@@ -76,7 +76,7 @@ class GameObjectManager {
     const list = [];
     this.list.forEach((e) => {
       if (e == me) return;
-      if (CheckCollision(checkRect, e.GetRect())) list.push(e);
+      if (CheckCollision(checkRect, e.GetRect(0, 0))) list.push(e);
     });
 
     return list;
@@ -190,26 +190,52 @@ class GameObject {
     }
   }
 
-  GetRect() {
+  GetRect(fx, fy) {
     return {
-      x: this.x + STATIC_OBJ[this.name].rect[0],
-      y: this.y + STATIC_OBJ[this.name].rect[1],
+      x: this.x + this.rect[0] + fx,
+      y: this.y + this.rect[1] + fy,
       width: this.rect[2],
       height: this.rect[3],
     };
   }
 
-  AddForce(x: number, y: number, forceGiver: GameObject, reason: string) {
+  AddForce(
+    x: number,
+    y: number,
+    forceGiver: GameObject,
+    reason: string,
+    setOp
+  ) {
     if (this.weight == 255) return;
-    console.log(`${x}, ${y} ${forceGiver.name} -> ${this.name} ${reason}`);
+    // console.log(`${x}, ${y} ${forceGiver.name} -> ${this.name} ${reason}`);
 
-    this.force.x += x;
-    this.force.y += y;
+    if (setOp) {
+      this.force.x = x;
+      this.force.y = y;
+    } else {
+      this.force.x += x;
+      this.force.y += y;
+    }
   }
 
   GetMag(): number {
     let mag = 0;
     return this.force.getMagnitude();
+  }
+
+  Moveable(): boolean {
+    if (this.weight == 255) return false;
+
+    const thismag = this.force.getMagnitude();
+
+    let fx = this.force.x;
+    let fy = this.force.y;
+
+    const newRect = this.GetRect(fx, fy);
+
+    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+
+    return list.length == 0;
   }
 
   Update() {
@@ -236,27 +262,23 @@ class GameObject {
     let fy = this.force.y;
     let mag: number = thismag - this.weight;
 
-    if (mag <= 0.5) {
-      mag = 0;
-    }
-    this.force.setMagnitude(mag);
-
-    const newRect = this.GetRect();
-    newRect.x = this.x + fx;
-    newRect.y = this.y + fy;
+    const newRect = this.GetRect(fx, fy);
 
     const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-    let newObject = false;
+    let moveable = true;
 
     list.forEach((e) => {
       if (GameObjectManager.CollisionChecked(e, this)) return;
       GameObjectManager.RegisterCollisionChecked(e, this);
-      newObject = true;
 
-      e.AddForce(fx, fy, this, "checkCollision");
+      e.AddForce(fx, fy, this, "checkCollision", false);
+      if (!e.Moveable()) {
+        moveable = false;
+        console.log(`${this.name} -> ${e.name} cant!`);
+      }
     });
 
-    if (!newObject) {
+    if (moveable) {
       this.x = this.spr.x += fx;
       this.y = this.spr.y += fy;
 
@@ -264,6 +286,12 @@ class GameObject {
       this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
       this.state = OBJ_STATE.MOVE;
     }
+
+    if (mag <= 0.5) {
+      mag = 0;
+    }
+
+    this.force.setMagnitude(mag);
   }
 }
 

@@ -119,18 +119,18 @@ class Game {
     // if (this.player.state == OBJ_STATE.IDLE)
     {
       if (InputControl.LeftDown()) {
-        this.player.AddForce(-1, 0, this.player, "keydown");
+        this.player.AddForce(-1, 0, this.player, "keydown", true);
         this.player.SetDir(DIR.LEFT);
       } else if (InputControl.RightDown()) {
-        this.player.AddForce(1, 0, this.player, "keydown");
+        this.player.AddForce(1, 0, this.player, "keydown", true);
         this.player.SetDir(DIR.RIGHT);
       }
 
       if (InputControl.UpDown()) {
-        this.player.AddForce(0, -1, this.player, "keydown");
+        this.player.AddForce(0, -1, this.player, "keydown", true);
         this.player.SetDir(DIR.UP);
       } else if (InputControl.DownDown()) {
-        this.player.AddForce(0, 1, this.player, "keydown");
+        this.player.AddForce(0, 1, this.player, "keydown", true);
         this.player.SetDir(DIR.DOWN);
       }
 

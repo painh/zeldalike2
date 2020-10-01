@@ -67,7 +67,7 @@ var GameObjectManager = /** @class */ (function () {
         this.list.forEach(function (e) {
             if (e == me)
                 return;
-            if (CheckCollision(checkRect, e.GetRect()))
+            if (CheckCollision(checkRect, e.GetRect(0, 0)))
                 list.push(e);
         });
         return list;
@@ -144,24 +144,40 @@ var GameObject = /** @class */ (function () {
                 return (this.spr.angle = -90);
         }
     };
-    GameObject.prototype.GetRect = function () {
+    GameObject.prototype.GetRect = function (fx, fy) {
         return {
-            x: this.x + STATIC_OBJ[this.name].rect[0],
-            y: this.y + STATIC_OBJ[this.name].rect[1],
+            x: this.x + this.rect[0] + fx,
+            y: this.y + this.rect[1] + fy,
             width: this.rect[2],
             height: this.rect[3]
         };
     };
-    GameObject.prototype.AddForce = function (x, y, forceGiver, reason) {
+    GameObject.prototype.AddForce = function (x, y, forceGiver, reason, setOp) {
         if (this.weight == 255)
             return;
-        console.log(x + ", " + y + " " + forceGiver.name + " -> " + this.name + " " + reason);
-        this.force.x += x;
-        this.force.y += y;
+        // console.log(`${x}, ${y} ${forceGiver.name} -> ${this.name} ${reason}`);
+        if (setOp) {
+            this.force.x = x;
+            this.force.y = y;
+        }
+        else {
+            this.force.x += x;
+            this.force.y += y;
+        }
     };
     GameObject.prototype.GetMag = function () {
         var mag = 0;
         return this.force.getMagnitude();
+    };
+    GameObject.prototype.Moveable = function () {
+        if (this.weight == 255)
+            return false;
+        var thismag = this.force.getMagnitude();
+        var fx = this.force.x;
+        var fy = this.force.y;
+        var newRect = this.GetRect(fx, fy);
+        var list = GameObjectManager.CheckCollision(newRect, this);
+        return list.length == 0;
     };
     GameObject.prototype.Update = function () {
         var _this = this;
@@ -185,29 +201,30 @@ var GameObject = /** @class */ (function () {
         var fx = this.force.x;
         var fy = this.force.y;
         var mag = thismag - this.weight;
-        if (mag <= 0.5) {
-            mag = 0;
-        }
-        this.force.setMagnitude(mag);
-        var newRect = this.GetRect();
-        newRect.x = this.x + fx;
-        newRect.y = this.y + fy;
+        var newRect = this.GetRect(fx, fy);
         var list = GameObjectManager.CheckCollision(newRect, this);
-        var newObject = false;
+        var moveable = true;
         list.forEach(function (e) {
             if (GameObjectManager.CollisionChecked(e, _this))
                 return;
             GameObjectManager.RegisterCollisionChecked(e, _this);
-            newObject = true;
-            e.AddForce(fx, fy, _this, "checkCollision");
+            e.AddForce(fx, fy, _this, "checkCollision", false);
+            if (!e.Moveable()) {
+                moveable = false;
+                console.log(_this.name + " -> " + e.name + " cant!");
+            }
         });
-        if (!newObject) {
+        if (moveable) {
             this.x = this.spr.x += fx;
             this.y = this.spr.y += fy;
             this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
             this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
             this.state = 2 /* MOVE */;
         }
+        if (mag <= 0.5) {
+            mag = 0;
+        }
+        this.force.setMagnitude(mag);
     };
     GameObject.sidx = 0;
     return GameObject;
