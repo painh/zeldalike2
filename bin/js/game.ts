@@ -1,21 +1,11 @@
 const TILE_SIZE = 16;
 
-class Force {
-  x: number;
-  y: number;
-  f: number;
-  constructor(x, y, f) {
-    this.x = x;
-    this.y = y;
-    this.f = f;
-  }
-}
-
 class Game {
   player: GameObject;
   pad1: Phaser.SinglePad;
   map: Phaser.Tilemap;
   game: Phaser.Game;
+  frame: number = 0;
 
   constructor() {
     GameObjectManager.Init(this);
@@ -44,7 +34,7 @@ class Game {
     );
 
     this.game.world.setBounds(0, 0, this.game.width, this.game.height - 16 * 5);
-    this.game.stage.disableVisibilityChange = true;
+    // this.game.stage.disableVisibilityChange = true;
   }
 
   init() {
@@ -101,6 +91,8 @@ class Game {
   }
 
   update() {
+    this.frame++;
+
     let playerSpeed = 10;
 
     if (this.pad1.connected) {
@@ -124,30 +116,33 @@ class Game {
       console.log((Math.atan2(leftStickX, leftStickY) * 180) / Math.PI);
     }
 
-    if (InputControl.LeftDown()) {
-      this.player.Move(-1, 0);
-      this.player.SetDir(DIR.LEFT);
-    } else if (InputControl.RightDown()) {
-      this.player.Move(1, 0);
-      this.player.SetDir(DIR.RIGHT);
-    }
+    // if (this.player.state == OBJ_STATE.IDLE)
+    {
+      if (InputControl.LeftDown()) {
+        this.player.AddForce(-1, 0, this.player, "keydown");
+        this.player.SetDir(DIR.LEFT);
+      } else if (InputControl.RightDown()) {
+        this.player.AddForce(1, 0, this.player, "keydown");
+        this.player.SetDir(DIR.RIGHT);
+      }
 
-    if (InputControl.UpDown()) {
-      this.player.Move(0, -1);
-      this.player.SetDir(DIR.UP);
-    } else if (InputControl.DownDown()) {
-      this.player.Move(0, 1);
-      this.player.SetDir(DIR.DOWN);
-    }
+      if (InputControl.UpDown()) {
+        this.player.AddForce(0, -1, this.player, "keydown");
+        this.player.SetDir(DIR.UP);
+      } else if (InputControl.DownDown()) {
+        this.player.AddForce(0, 1, this.player, "keydown");
+        this.player.SetDir(DIR.DOWN);
+      }
 
-    if (InputControl.JustDown("Z")) {
-      const attack: GameObject = GameObjectManager.Add(
-        this.player.x,
-        this.player.y,
-        "playerAttack",
-        0
-      );
-      attack.lifeTimeMS = 1000;
+      if (InputControl.JustDown("Z")) {
+        const attack: GameObject = GameObjectManager.Add(
+          this.player.x,
+          this.player.y,
+          "playerAttack",
+          0
+        );
+        attack.lifeTimeMS = 1000;
+      }
     }
 
     GameObjectManager.Update();

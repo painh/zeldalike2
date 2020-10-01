@@ -1,15 +1,8 @@
 var TILE_SIZE = 16;
-var Force = /** @class */ (function () {
-    function Force(x, y, f) {
-        this.x = x;
-        this.y = y;
-        this.f = f;
-    }
-    return Force;
-}());
 var Game = /** @class */ (function () {
     function Game() {
         var _this = this;
+        this.frame = 0;
         GameObjectManager.Init(this);
         // this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
         this.game = new Phaser.Game(256, 16 * 10, Phaser.CANVAS, "game", {
@@ -23,7 +16,7 @@ var Game = /** @class */ (function () {
         this.game.load.tilemap("room1", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
         this.game.load.spritesheet("gamesprite", "assets/16x16_Jerom_CC-BY-SA-3.0.png", TILE_SIZE, TILE_SIZE, 200);
         this.game.world.setBounds(0, 0, this.game.width, this.game.height - 16 * 5);
-        this.game.stage.disableVisibilityChange = true;
+        // this.game.stage.disableVisibilityChange = true;
     };
     Game.prototype.init = function () {
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -71,6 +64,7 @@ var Game = /** @class */ (function () {
         InputControl.Init(this.game);
     };
     Game.prototype.update = function () {
+        this.frame++;
         var playerSpeed = 10;
         if (this.pad1.connected) {
             var leftStickX = this.pad1.axis(Phaser.Gamepad.XBOX360_STICK_LEFT_X);
@@ -88,25 +82,28 @@ var Game = /** @class */ (function () {
             // this.player.body.angle += 10;
             console.log((Math.atan2(leftStickX, leftStickY) * 180) / Math.PI);
         }
-        if (InputControl.LeftDown()) {
-            this.player.Move(-1, 0);
-            this.player.SetDir(1 /* LEFT */);
-        }
-        else if (InputControl.RightDown()) {
-            this.player.Move(1, 0);
-            this.player.SetDir(3 /* RIGHT */);
-        }
-        if (InputControl.UpDown()) {
-            this.player.Move(0, -1);
-            this.player.SetDir(2 /* UP */);
-        }
-        else if (InputControl.DownDown()) {
-            this.player.Move(0, 1);
-            this.player.SetDir(0 /* DOWN */);
-        }
-        if (InputControl.JustDown("Z")) {
-            var attack = GameObjectManager.Add(this.player.x, this.player.y, "playerAttack", 0);
-            attack.lifeTimeMS = 1000;
+        // if (this.player.state == OBJ_STATE.IDLE)
+        {
+            if (InputControl.LeftDown()) {
+                this.player.AddForce(-1, 0, this.player, "keydown");
+                this.player.SetDir(1 /* LEFT */);
+            }
+            else if (InputControl.RightDown()) {
+                this.player.AddForce(1, 0, this.player, "keydown");
+                this.player.SetDir(3 /* RIGHT */);
+            }
+            if (InputControl.UpDown()) {
+                this.player.AddForce(0, -1, this.player, "keydown");
+                this.player.SetDir(2 /* UP */);
+            }
+            else if (InputControl.DownDown()) {
+                this.player.AddForce(0, 1, this.player, "keydown");
+                this.player.SetDir(0 /* DOWN */);
+            }
+            if (InputControl.JustDown("Z")) {
+                var attack = GameObjectManager.Add(this.player.x, this.player.y, "playerAttack", 0);
+                attack.lifeTimeMS = 1000;
+            }
         }
         GameObjectManager.Update();
     };

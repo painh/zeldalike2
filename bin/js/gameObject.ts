@@ -14,6 +14,30 @@ class GameObjectManager {
   static list: GameObject[] = [];
   static game: Game;
   static sprName: string = "gamesprite";
+  static checkedList = [];
+
+  static MakeKey(obj1: GameObject, obj2: GameObject) {
+    let less, greater;
+    if (obj1.idx < obj2.idx) {
+      less = obj1.idx;
+      greater = obj2.idx;
+    } else {
+      less = obj2.idx;
+      greater = obj1.idx;
+    }
+
+    return `${less}-${greater}`;
+  }
+
+  static RegisterCollisionChecked(obj1: GameObject, obj2: GameObject) {
+    const key = GameObjectManager.MakeKey(obj1, obj2);
+    GameObjectManager.checkedList[key] = true;
+  }
+
+  static CollisionChecked(obj1: GameObject, obj2: GameObject) {
+    const key = GameObjectManager.MakeKey(obj1, obj2);
+    return GameObjectManager.checkedList[key];
+  }
 
   static Init(game: Game) {
     GameObjectManager.game = game;
@@ -37,6 +61,7 @@ class GameObjectManager {
   }
 
   static Update() {
+    GameObjectManager.checkedList = [];
     InputControl.Update();
     GameObjectManager.list.forEach((e, k, list) => {
       e.Update();
@@ -68,6 +93,18 @@ const enum DIR {
 const enum OBJ_STATE {
   IDLE = 0,
   ATTACK = 1,
+  MOVE = 2,
+  DEAD = 3,
+}
+
+class Force extends Vector {
+  giver: GameObject;
+  reason: string;
+  constructor(x: number, y: number, owner: GameObject, reason: string) {
+    super(x, y);
+    this.giver = owner;
+    this.reason = reason;
+  }
 }
 
 class GameObject {
@@ -78,7 +115,8 @@ class GameObject {
   ty: number;
   spr: Phaser.Sprite;
   colRect: Phaser.Graphics;
-  forces: Vector[] = [];
+  // forces: Force[] = [];
+  force: Force;
   weight: number;
   rect: number[] = [];
   name: string;
@@ -88,6 +126,9 @@ class GameObject {
   dir: DIR = DIR.DOWN;
   state: OBJ_STATE = OBJ_STATE.IDLE;
 
+  static sidx: number = 0;
+  idx: number = 0;
+
   constructor(
     game: Phaser.Game,
     objX: number,
@@ -95,6 +136,10 @@ class GameObject {
     name: string,
     frame: number
   ) {
+    this.idx = GameObject.sidx++;
+
+    this.force = new Force(0, 0, this, "init");
+
     this.name = name;
     this.spr = game.add.sprite(objX, objY, GameObjectManager.sprName);
     this.spr.frame = frame;
@@ -125,8 +170,6 @@ class GameObject {
     );
 
     this.createAt = Date.now();
-
-    console.log(this);
   }
 
   Release() {
@@ -141,9 +184,9 @@ class GameObject {
       case DIR.LEFT:
         return (this.spr.angle = 90);
       case DIR.UP:
-        return (this.spr.angle = -90);
-      case DIR.RIGHT:
         return (this.spr.angle = 180);
+      case DIR.RIGHT:
+        return (this.spr.angle = -90);
     }
   }
 
@@ -156,10 +199,17 @@ class GameObject {
     };
   }
 
-  Move(x, y) {
+  AddForce(x: number, y: number, forceGiver: GameObject, reason: string) {
     if (this.weight == 255) return;
+    console.log(`${x}, ${y} ${forceGiver.name} -> ${this.name} ${reason}`);
 
-    this.forces.push(new Vector(x, y));
+    this.force.x += x;
+    this.force.y += y;
+  }
+
+  GetMag(): number {
+    let mag = 0;
+    return this.force.getMagnitude();
   }
 
   Update() {
@@ -169,41 +219,50 @@ class GameObject {
     if (this.lifeTimeMS != 0) {
       if (Date.now() - this.createAt >= this.lifeTimeMS) {
         this.isDead = true;
+        this.state = OBJ_STATE.DEAD;
         return true;
       }
     }
-    let fx = 0;
-    let fy = 0;
-    let allf = 0;
-    if (this.forces.length == 0) return;
 
-    this.forces.forEach((e, k, list) => {
-      fx += e.x;
-      fy += e.y;
+    const thismag = this.force.getMagnitude();
 
-      const mag = e.getMagnitude() - this.weight;
+    if (thismag == 0) {
+      this.state = OBJ_STATE.IDLE;
+    } else {
+      this.state = OBJ_STATE.MOVE;
+    }
 
-      if (mag <= 0) {
-        list.splice(k, 1);
-      } else e.setMagnitude(mag);
-    });
+    let fx = this.force.x;
+    let fy = this.force.y;
+    let mag: number = thismag - this.weight;
+
+    if (mag <= 0.5) {
+      mag = 0;
+    }
+    this.force.setMagnitude(mag);
 
     const newRect = this.GetRect();
     newRect.x = this.x + fx;
     newRect.y = this.y + fy;
 
     const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+    let newObject = false;
 
-    if (list.length == 0) {
+    list.forEach((e) => {
+      if (GameObjectManager.CollisionChecked(e, this)) return;
+      GameObjectManager.RegisterCollisionChecked(e, this);
+      newObject = true;
+
+      e.AddForce(fx, fy, this, "checkCollision");
+    });
+
+    if (!newObject) {
       this.x = this.spr.x += fx;
       this.y = this.spr.y += fy;
 
-      this.colRect.x = this.x - TILE_SIZE / 2;
-      this.colRect.y = this.y - TILE_SIZE / 2;
-    } else {
-      list.forEach((e) => {
-        e.Move(fx, fy);
-      });
+      this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
+      this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
+      this.state = OBJ_STATE.MOVE;
     }
   }
 }

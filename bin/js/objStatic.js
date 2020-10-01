@@ -5,11 +5,12 @@ var STATIC_OBJ = {
     },
     상자: {
         weight: 10,
-        rect: [1, 1, 14, 14]
+        rect: [5, 5, 16 - 5 * 2, 16 - 5 * 2]
     },
     tree: {
         weight: 255,
-        rect: [0, 0, 16, 16]
+        // rect: [0, 0, 16, 16],
+        rect: [5, 5, 16 - 5 * 2, 16 - 5 * 2]
     },
     playerAttack: {
         weight: 255,
