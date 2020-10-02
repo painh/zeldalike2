@@ -10,151 +10,6 @@ function CheckCollision(r1, r2) {
 
   return false;
 }
-class GameObjectManager {
-  static list: GameObject[] = [];
-  static game: Game;
-  static sprName: string = "gamesprite";
-  static checkedList = [];
-
-  static MakeKey(obj1: GameObject, obj2: GameObject) {
-    // let less, greater;
-    // if (obj1.idx < obj2.idx) {
-    //   less = obj1.idx;
-    //   greater = obj2.idx;
-    // } else {
-    //   less = obj2.idx;
-    //   greater = obj1.idx;
-    // }
-
-    const less = obj1.idx;
-    const greater = obj2.idx;
-
-    return `${less}-${greater}`;
-  }
-
-  static RegisterCollisionChecked(obj1: GameObject, obj2: GameObject) {
-    const key = GameObjectManager.MakeKey(obj1, obj2);
-    GameObjectManager.checkedList[key] = true;
-  }
-
-  static CollisionChecked(obj1: GameObject, obj2: GameObject) {
-    const key = GameObjectManager.MakeKey(obj1, obj2);
-    return GameObjectManager.checkedList[key];
-  }
-
-  static Init(game: Game) {
-    GameObjectManager.game = game;
-  }
-  static Add(
-    objX: number,
-    objY: number,
-    name: string,
-    frame: number
-  ): GameObject {
-    const obj = new GameObject(
-      GameObjectManager.game.game,
-      objX,
-      objY,
-      name,
-      frame
-    );
-    GameObjectManager.list.push(obj);
-
-    return obj;
-  }
-
-  static Update() {
-    GameObjectManager.checkedList = [];
-    InputControl.Update();
-
-    let moveList = [];
-    GameObjectManager.list.forEach((e, k, list) => {
-      e.Update();
-      if (e.isDead) {
-        e.Release();
-        list.splice(k, 1);
-      } else {
-        moveList.push(e);
-      }
-    });
-  }
-
-  static PUpdate() {
-    let moveList = [];
-    GameObjectManager.list.forEach((e, k, list) => {
-      if (!e.isDead) {
-        moveList.push(e);
-      }
-    });
-
-    let cnt = 0;
-    while (cnt < 5) {
-      cnt++;
-      moveList.forEach((srcObj: GameObject, k, objList) => {
-        let fx = srcObj.force.x;
-        let fy = srcObj.force.y;
-        if (srcObj.GetMag() == 0) return;
-        const newRect = srcObj.GetRect(fx, fy);
-        const colList: GameObject[] = GameObjectManager.CheckCollision(
-          newRect,
-          srcObj
-        );
-        colList.forEach((targetObj) => {
-          if (GameObjectManager.CollisionChecked(targetObj, srcObj)) return;
-          GameObjectManager.RegisterCollisionChecked(targetObj, srcObj);
-          targetObj.AddForce(fx, fy, srcObj, "checkCollision", false);
-        });
-        if (colList.length == 0) {
-          srcObj.x = srcObj.spr.x += fx;
-          srcObj.y = srcObj.spr.y += fy;
-          srcObj.moved = true;
-
-          srcObj.SetState(OBJ_STATE.MOVE);
-
-          objList.splice(k, 1);
-        }
-      });
-
-      if (moveList.length == 0) break;
-
-      // if (GameObjectManager.CheckMoveDone()) cnt = 99;
-    }
-    console.log(moveList.length);
-
-    GameObjectManager.list.forEach((gameObj) => {
-      const thismag = gameObj.force.getMagnitude();
-      let mag: number = thismag - gameObj.weight;
-
-      gameObj.colRect.x = Math.round(gameObj.x - TILE_SIZE / 2);
-      gameObj.colRect.y = Math.round(gameObj.y - TILE_SIZE / 2);
-
-      if (mag <= 0.5) {
-        mag = 0;
-      }
-      gameObj.force.setMagnitude(mag);
-    });
-  }
-
-  static CheckMoveDone() {
-    let done = true;
-    GameObjectManager.list.forEach((e) => {
-      if (!done) return;
-      if (!e.MoveDoneThisFrame()) done = false;
-    });
-
-    return done;
-  }
-
-  static CheckCollision(checkRect: any, me: GameObject): GameObject[] {
-    const list = [];
-    this.list.forEach((e) => {
-      if (e == me) return;
-      if (CheckCollision(checkRect, e.GetRect(0, 0))) list.push(e);
-    });
-
-    return list;
-  }
-}
 
 const enum DIR {
   DOWN = 0,
@@ -256,6 +111,7 @@ class GameObject {
   }
 
   SetDir(dir: DIR) {
+    this.dir = dir;
     switch (dir) {
       case DIR.DOWN:
         return (this.spr.angle = 0);
@@ -295,7 +151,7 @@ class GameObject {
       this.force.y += y;
     }
 
-    this.SetState(OBJ_STATE.MOVE);
+    // this.SetState(OBJ_STATE.MOVE);
   }
 
   GetMag(): number {
@@ -344,6 +200,14 @@ class GameObject {
 
   SetState(state: OBJ_STATE) {
     if (this.state == state) return;
+
+    // console.log(
+    //   GameObjectManager.game.frame,
+    //   this.idx,
+    //   this.name,
+    //   this.idx,
+    //   state
+    // );
     this.state = state;
     switch (state) {
       case OBJ_STATE.IDLE:
@@ -376,7 +240,12 @@ class GameObject {
     }
 
     // console.log("player", this.force.getMagnitude(), this.state);
-    if (this.force.getMagnitude() == 0) {
+  }
+
+  AfterUpdate() {
+    if (this.moved == true) {
+      this.SetState(OBJ_STATE.MOVE);
+    } else {
       this.SetState(OBJ_STATE.IDLE);
     }
   }
@@ -393,5 +262,33 @@ class GameObject {
       return true;
 
     return false;
+  }
+
+  GetAttackX() {
+    const rect = this.GetRect(0, 0);
+    switch (this.dir) {
+      case DIR.DOWN:
+      case DIR.UP:
+        return rect.x + rect.width / 2;
+      case DIR.LEFT:
+        return rect.x;
+
+      case DIR.RIGHT:
+        return rect.x + rect.width;
+    }
+  }
+
+  GetAttackY() {
+    const rect = this.GetRect(0, 0);
+    switch (this.dir) {
+      case DIR.LEFT:
+      case DIR.RIGHT:
+        return rect.y + rect.height / 2;
+      case DIR.UP:
+        return rect.y;
+
+      case DIR.DOWN:
+        return rect.y + rect.height;
+    }
   }
 }

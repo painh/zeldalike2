@@ -15,6 +15,7 @@ class Game {
       init: () => this.init(),
       create: () => this.create(),
       update: () => this.update(),
+      render: () => this.Render(),
     });
   }
 
@@ -71,17 +72,31 @@ class Game {
   }
 
   createObj(obj) {
-    console.log(obj);
+    // console.log(obj);
     if (obj.type == "player") {
-      this.player = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
+      this.player = GameObjectManager.Add(
+        obj.x,
+        obj.y,
+        obj.type,
+        obj.gid - 1,
+        null
+      );
       return this.player;
     }
 
-    let mapObj = GameObjectManager.Add(obj.x, obj.y, obj.type, obj.gid - 1);
+    let mapObj = GameObjectManager.Add(
+      obj.x,
+      obj.y,
+      obj.type,
+      obj.gid - 1,
+      null
+    );
     return mapObj;
   }
 
   create() {
+    this.game.time.advancedTiming = true;
+
     this.makeRoom("room1");
 
     this.game.input.gamepad.start();
@@ -135,18 +150,23 @@ class Game {
 
       if (this.player.CanAttack() && InputControl.JustDown("Z")) {
         const attack: GameObject = GameObjectManager.Add(
-          this.player.x,
-          this.player.y,
+          this.player.GetAttackX(),
+          this.player.GetAttackY(),
           "playerAttack",
-          0
+          0,
+          this.player
         );
         attack.lifeTimeMS = 1000;
       }
     }
 
     GameObjectManager.Update();
-
     GameObjectManager.PUpdate();
+    GameObjectManager.AfterUpdate();
+  }
+
+  Render() {
+    this.game.debug.text(this.game.time.fps.toString(), 2, 14, "#00ff00");
   }
 }
 

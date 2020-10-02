@@ -7,122 +7,6 @@ function CheckCollision(r1, r2) {
     }
     return false;
 }
-class GameObjectManager {
-    static MakeKey(obj1, obj2) {
-        // let less, greater;
-        // if (obj1.idx < obj2.idx) {
-        //   less = obj1.idx;
-        //   greater = obj2.idx;
-        // } else {
-        //   less = obj2.idx;
-        //   greater = obj1.idx;
-        // }
-        const less = obj1.idx;
-        const greater = obj2.idx;
-        return `${less}-${greater}`;
-    }
-    static RegisterCollisionChecked(obj1, obj2) {
-        const key = GameObjectManager.MakeKey(obj1, obj2);
-        GameObjectManager.checkedList[key] = true;
-    }
-    static CollisionChecked(obj1, obj2) {
-        const key = GameObjectManager.MakeKey(obj1, obj2);
-        return GameObjectManager.checkedList[key];
-    }
-    static Init(game) {
-        GameObjectManager.game = game;
-    }
-    static Add(objX, objY, name, frame) {
-        const obj = new GameObject(GameObjectManager.game.game, objX, objY, name, frame);
-        GameObjectManager.list.push(obj);
-        return obj;
-    }
-    static Update() {
-        GameObjectManager.checkedList = [];
-        InputControl.Update();
-        let moveList = [];
-        GameObjectManager.list.forEach((e, k, list) => {
-            e.Update();
-            if (e.isDead) {
-                e.Release();
-                list.splice(k, 1);
-            }
-            else {
-                moveList.push(e);
-            }
-        });
-    }
-    static PUpdate() {
-        let moveList = [];
-        GameObjectManager.list.forEach((e, k, list) => {
-            if (!e.isDead) {
-                moveList.push(e);
-            }
-        });
-        let cnt = 0;
-        while (cnt < 5) {
-            cnt++;
-            moveList.forEach((srcObj, k, objList) => {
-                let fx = srcObj.force.x;
-                let fy = srcObj.force.y;
-                if (srcObj.GetMag() == 0)
-                    return;
-                const newRect = srcObj.GetRect(fx, fy);
-                const colList = GameObjectManager.CheckCollision(newRect, srcObj);
-                colList.forEach((targetObj) => {
-                    if (GameObjectManager.CollisionChecked(targetObj, srcObj))
-                        return;
-                    GameObjectManager.RegisterCollisionChecked(targetObj, srcObj);
-                    targetObj.AddForce(fx, fy, srcObj, "checkCollision", false);
-                });
-                if (colList.length == 0) {
-                    srcObj.x = srcObj.spr.x += fx;
-                    srcObj.y = srcObj.spr.y += fy;
-                    srcObj.moved = true;
-                    srcObj.SetState(2 /* MOVE */);
-                    objList.splice(k, 1);
-                }
-            });
-            if (moveList.length == 0)
-                break;
-            // if (GameObjectManager.CheckMoveDone()) cnt = 99;
-        }
-        console.log(moveList.length);
-        GameObjectManager.list.forEach((gameObj) => {
-            const thismag = gameObj.force.getMagnitude();
-            let mag = thismag - gameObj.weight;
-            gameObj.colRect.x = Math.round(gameObj.x - TILE_SIZE / 2);
-            gameObj.colRect.y = Math.round(gameObj.y - TILE_SIZE / 2);
-            if (mag <= 0.5) {
-                mag = 0;
-            }
-            gameObj.force.setMagnitude(mag);
-        });
-    }
-    static CheckMoveDone() {
-        let done = true;
-        GameObjectManager.list.forEach((e) => {
-            if (!done)
-                return;
-            if (!e.MoveDoneThisFrame())
-                done = false;
-        });
-        return done;
-    }
-    static CheckCollision(checkRect, me) {
-        const list = [];
-        this.list.forEach((e) => {
-            if (e == me)
-                return;
-            if (CheckCollision(checkRect, e.GetRect(0, 0)))
-                list.push(e);
-        });
-        return list;
-    }
-}
-GameObjectManager.list = [];
-GameObjectManager.sprName = "gamesprite";
-GameObjectManager.checkedList = [];
 var DIR;
 (function (DIR) {
     DIR[DIR["DOWN"] = 0] = "DOWN";
@@ -180,6 +64,7 @@ class GameObject {
         this.colRect.destroy();
     }
     SetDir(dir) {
+        this.dir = dir;
         switch (dir) {
             case 0 /* DOWN */:
                 return (this.spr.angle = 0);
@@ -211,7 +96,7 @@ class GameObject {
             this.force.x += x;
             this.force.y += y;
         }
-        this.SetState(2 /* MOVE */);
+        // this.SetState(OBJ_STATE.MOVE);
     }
     GetMag() {
         return this.force.getMagnitude();
@@ -253,6 +138,13 @@ class GameObject {
     SetState(state) {
         if (this.state == state)
             return;
+        // console.log(
+        //   GameObjectManager.game.frame,
+        //   this.idx,
+        //   this.name,
+        //   this.idx,
+        //   state
+        // );
         this.state = state;
         switch (state) {
             case 0 /* IDLE */:
@@ -282,7 +174,12 @@ class GameObject {
             }
         }
         // console.log("player", this.force.getMagnitude(), this.state);
-        if (this.force.getMagnitude() == 0) {
+    }
+    AfterUpdate() {
+        if (this.moved == true) {
+            this.SetState(2 /* MOVE */);
+        }
+        else {
             this.SetState(0 /* IDLE */);
         }
     }
@@ -295,6 +192,30 @@ class GameObject {
         if (this.state == 0 /* IDLE */ || this.state == 2 /* MOVE */)
             return true;
         return false;
+    }
+    GetAttackX() {
+        const rect = this.GetRect(0, 0);
+        switch (this.dir) {
+            case 0 /* DOWN */:
+            case 2 /* UP */:
+                return rect.x + rect.width / 2;
+            case 1 /* LEFT */:
+                return rect.x;
+            case 3 /* RIGHT */:
+                return rect.x + rect.width;
+        }
+    }
+    GetAttackY() {
+        const rect = this.GetRect(0, 0);
+        switch (this.dir) {
+            case 1 /* LEFT */:
+            case 3 /* RIGHT */:
+                return rect.y + rect.height / 2;
+            case 2 /* UP */:
+                return rect.y;
+            case 0 /* DOWN */:
+                return rect.y + rect.height;
+        }
     }
 }
 GameObject.sidx = 0;

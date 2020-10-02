@@ -7,12 +7,31 @@
     <script src="js/vector.js"></script>
     <script src="js/inputControl.js"></script>
     <script src="js/objStatic.js"></script>
+    <script src="js/gameObjectManager.js"></script>
     <script src="js/gameObject.js"></script>
+    <script src="js/obj/player.js"></script>
     <script src="js/game.js"></script>
 
     <style type="text/css">
       body {
         margin: 0 auto;
+        image-rendering: optimizeSpeed;
+        image-rendering: crisp-edges;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -o-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: optimize-contrast;
+        -ms-interpolation-mode: nearest-neighbor;
+      }
+      canvas {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        outline: none;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
       }
     </style>
   </head>
