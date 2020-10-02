@@ -77,14 +77,23 @@ class GameObjectManager {
         moveList.push(e);
       }
     });
+  }
+
+  static PUpdate() {
+    let moveList = [];
+    GameObjectManager.list.forEach((e, k, list) => {
+      if (!e.isDead) {
+        moveList.push(e);
+      }
+    });
 
     let cnt = 0;
-    while (cnt < 10) {
+    while (cnt < 5) {
       cnt++;
-      moveList.forEach((srcObj, k, objList) => {
+      moveList.forEach((srcObj: GameObject, k, objList) => {
         let fx = srcObj.force.x;
         let fy = srcObj.force.y;
-        if (fx == 0 && fy == 0) return;
+        if (srcObj.GetMag() == 0) return;
         const newRect = srcObj.GetRect(fx, fy);
         const colList: GameObject[] = GameObjectManager.CheckCollision(
           newRect,
@@ -98,6 +107,10 @@ class GameObjectManager {
         if (colList.length == 0) {
           srcObj.x = srcObj.spr.x += fx;
           srcObj.y = srcObj.spr.y += fy;
+          srcObj.moved = true;
+
+          srcObj.SetState(OBJ_STATE.MOVE);
+
           objList.splice(k, 1);
         }
       });
@@ -106,6 +119,7 @@ class GameObjectManager {
 
       // if (GameObjectManager.CheckMoveDone()) cnt = 99;
     }
+    console.log(moveList.length);
 
     GameObjectManager.list.forEach((gameObj) => {
       const thismag = gameObj.force.getMagnitude();
@@ -184,6 +198,7 @@ class GameObject {
   isDead: boolean = false;
   dir: DIR = DIR.DOWN;
   state: OBJ_STATE = OBJ_STATE.IDLE;
+  moved: boolean = false;
 
   static sidx: number = 0;
   idx: number = 0;
@@ -219,7 +234,13 @@ class GameObject {
       this.x - TILE_SIZE / 2,
       this.y - TILE_SIZE / 2
     );
-    this.colRect.lineStyle(1, 0x00ff00, 1);
+
+    this.DrawColRect(0x00ff00);
+    this.createAt = Date.now();
+  }
+
+  DrawColRect(color) {
+    this.colRect.lineStyle(1, color, 1);
 
     this.colRect.drawRect(
       this.rect[0] + 0.5,
@@ -227,8 +248,6 @@ class GameObject {
       this.rect[2] - 1,
       this.rect[3] - 1
     );
-
-    this.createAt = Date.now();
   }
 
   Release() {
@@ -275,10 +294,11 @@ class GameObject {
       this.force.x += x;
       this.force.y += y;
     }
+
+    this.SetState(OBJ_STATE.MOVE);
   }
 
   GetMag(): number {
-    let mag = 0;
     return this.force.getMagnitude();
   }
 
@@ -322,59 +342,56 @@ class GameObject {
     return moveable;
   }
 
+  SetState(state: OBJ_STATE) {
+    if (this.state == state) return;
+    this.state = state;
+    switch (state) {
+      case OBJ_STATE.IDLE:
+        this.DrawColRect(0x00ff00);
+        break;
+      case OBJ_STATE.MOVE:
+        this.DrawColRect(0x0000ff);
+        break;
+      case OBJ_STATE.ATTACK:
+        this.DrawColRect(0xff0000);
+        break;
+      case OBJ_STATE.DEAD:
+        this.DrawColRect(0x333333);
+        break;
+    }
+  }
+
   Update() {
     if (this.isDead) {
       return;
     }
+    this.moved = false;
+
     if (this.lifeTimeMS != 0) {
       if (Date.now() - this.createAt >= this.lifeTimeMS) {
         this.isDead = true;
-        this.state = OBJ_STATE.DEAD;
+        this.SetState(OBJ_STATE.DEAD);
         return true;
       }
     }
 
-    const thismag = this.force.getMagnitude();
-
-    if (thismag == 0) {
-      this.state = OBJ_STATE.IDLE;
-    } else {
-      this.state = OBJ_STATE.MOVE;
+    // console.log("player", this.force.getMagnitude(), this.state);
+    if (this.force.getMagnitude() == 0) {
+      this.SetState(OBJ_STATE.IDLE);
     }
+  }
 
-    // let fx = this.force.x;
-    // let fy = this.force.y;
-    // let mag: number = thismag - this.weight;
+  CanAttack() {
+    if (this.state == OBJ_STATE.IDLE || this.state == OBJ_STATE.MOVE)
+      return true;
 
-    // const newRect = this.GetRect(fx, fy);
+    return false;
+  }
 
-    // const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-    // let moveable = true;
+  CanMove() {
+    if (this.state == OBJ_STATE.IDLE || this.state == OBJ_STATE.MOVE)
+      return true;
 
-    // list.forEach((e) => {
-    //   if (GameObjectManager.CollisionChecked(e, this)) return;
-    //   GameObjectManager.RegisterCollisionChecked(e, this);
-
-    //   e.AddForce(fx, fy, this, "checkCollision", false);
-    //   if (!e.Moveable()) {
-    //     moveable = false;
-    //     // console.log(`${this.name} -> ${e.name} cant!`);
-    //   }
-    // });
-
-    // if (moveable) {
-    //   this.x = this.spr.x += fx;
-    //   this.y = this.spr.y += fy;
-
-    //   this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
-    //   this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
-    //   this.state = OBJ_STATE.MOVE;
-    // }
-
-    // if (mag <= 0.5) {
-    //   mag = 0;
-    // }
-
-    // this.force.setMagnitude(mag);
+    return false;
   }
 }

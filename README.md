@@ -6,3 +6,18 @@ http-server . -c-1 -o
 
 assets
 https://opengameart.org/content/16x16-fantasy-tileset
+
+
+
+TILED
+https://www.mapeditor.org/
+    res/map.tmx
+    
+    objLayer를 선택
+    shortcut
+        s : select
+        t : tiled
+
+        ctrl + 드래그로 snap to grid
+
+    Ctrl+S 로 저장 후 Ctrl+E로 export도 함께

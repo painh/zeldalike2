@@ -51,13 +51,21 @@ class GameObjectManager {
                 moveList.push(e);
             }
         });
+    }
+    static PUpdate() {
+        let moveList = [];
+        GameObjectManager.list.forEach((e, k, list) => {
+            if (!e.isDead) {
+                moveList.push(e);
+            }
+        });
         let cnt = 0;
-        while (cnt < 10) {
+        while (cnt < 5) {
             cnt++;
             moveList.forEach((srcObj, k, objList) => {
                 let fx = srcObj.force.x;
                 let fy = srcObj.force.y;
-                if (fx == 0 && fy == 0)
+                if (srcObj.GetMag() == 0)
                     return;
                 const newRect = srcObj.GetRect(fx, fy);
                 const colList = GameObjectManager.CheckCollision(newRect, srcObj);
@@ -70,6 +78,8 @@ class GameObjectManager {
                 if (colList.length == 0) {
                     srcObj.x = srcObj.spr.x += fx;
                     srcObj.y = srcObj.spr.y += fy;
+                    srcObj.moved = true;
+                    srcObj.SetState(2 /* MOVE */);
                     objList.splice(k, 1);
                 }
             });
@@ -77,6 +87,7 @@ class GameObjectManager {
                 break;
             // if (GameObjectManager.CheckMoveDone()) cnt = 99;
         }
+        console.log(moveList.length);
         GameObjectManager.list.forEach((gameObj) => {
             const thismag = gameObj.force.getMagnitude();
             let mag = thismag - gameObj.weight;
@@ -140,6 +151,7 @@ class GameObject {
         this.isDead = false;
         this.dir = 0 /* DOWN */;
         this.state = 0 /* IDLE */;
+        this.moved = false;
         this.idx = 0;
         this.idx = GameObject.sidx++;
         this.force = new Force(0, 0, this, "init");
@@ -156,9 +168,12 @@ class GameObject {
         this.weight = STATIC_OBJ[name].weight;
         this.rect = STATIC_OBJ[name].rect;
         this.colRect = game.add.graphics(this.x - TILE_SIZE / 2, this.y - TILE_SIZE / 2);
-        this.colRect.lineStyle(1, 0x00ff00, 1);
-        this.colRect.drawRect(this.rect[0] + 0.5, this.rect[1] + 0.5, this.rect[2] - 1, this.rect[3] - 1);
+        this.DrawColRect(0x00ff00);
         this.createAt = Date.now();
+    }
+    DrawColRect(color) {
+        this.colRect.lineStyle(1, color, 1);
+        this.colRect.drawRect(this.rect[0] + 0.5, this.rect[1] + 0.5, this.rect[2] - 1, this.rect[3] - 1);
     }
     Release() {
         this.spr.destroy();
@@ -196,9 +211,9 @@ class GameObject {
             this.force.x += x;
             this.force.y += y;
         }
+        this.SetState(2 /* MOVE */);
     }
     GetMag() {
-        let mag = 0;
         return this.force.getMagnitude();
     }
     Moveable() {
@@ -235,50 +250,51 @@ class GameObject {
         });
         return moveable;
     }
+    SetState(state) {
+        if (this.state == state)
+            return;
+        this.state = state;
+        switch (state) {
+            case 0 /* IDLE */:
+                this.DrawColRect(0x00ff00);
+                break;
+            case 2 /* MOVE */:
+                this.DrawColRect(0x0000ff);
+                break;
+            case 1 /* ATTACK */:
+                this.DrawColRect(0xff0000);
+                break;
+            case 3 /* DEAD */:
+                this.DrawColRect(0x333333);
+                break;
+        }
+    }
     Update() {
         if (this.isDead) {
             return;
         }
+        this.moved = false;
         if (this.lifeTimeMS != 0) {
             if (Date.now() - this.createAt >= this.lifeTimeMS) {
                 this.isDead = true;
-                this.state = 3 /* DEAD */;
+                this.SetState(3 /* DEAD */);
                 return true;
             }
         }
-        const thismag = this.force.getMagnitude();
-        if (thismag == 0) {
-            this.state = 0 /* IDLE */;
+        // console.log("player", this.force.getMagnitude(), this.state);
+        if (this.force.getMagnitude() == 0) {
+            this.SetState(0 /* IDLE */);
         }
-        else {
-            this.state = 2 /* MOVE */;
-        }
-        // let fx = this.force.x;
-        // let fy = this.force.y;
-        // let mag: number = thismag - this.weight;
-        // const newRect = this.GetRect(fx, fy);
-        // const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-        // let moveable = true;
-        // list.forEach((e) => {
-        //   if (GameObjectManager.CollisionChecked(e, this)) return;
-        //   GameObjectManager.RegisterCollisionChecked(e, this);
-        //   e.AddForce(fx, fy, this, "checkCollision", false);
-        //   if (!e.Moveable()) {
-        //     moveable = false;
-        //     // console.log(`${this.name} -> ${e.name} cant!`);
-        //   }
-        // });
-        // if (moveable) {
-        //   this.x = this.spr.x += fx;
-        //   this.y = this.spr.y += fy;
-        //   this.colRect.x = Math.round(this.x - TILE_SIZE / 2);
-        //   this.colRect.y = Math.round(this.y - TILE_SIZE / 2);
-        //   this.state = OBJ_STATE.MOVE;
-        // }
-        // if (mag <= 0.5) {
-        //   mag = 0;
-        // }
-        // this.force.setMagnitude(mag);
+    }
+    CanAttack() {
+        if (this.state == 0 /* IDLE */ || this.state == 2 /* MOVE */)
+            return true;
+        return false;
+    }
+    CanMove() {
+        if (this.state == 0 /* IDLE */ || this.state == 2 /* MOVE */)
+            return true;
+        return false;
     }
 }
 GameObject.sidx = 0;

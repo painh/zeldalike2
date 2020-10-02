@@ -116,8 +116,7 @@ class Game {
       console.log((Math.atan2(leftStickX, leftStickY) * 180) / Math.PI);
     }
 
-    // if (this.player.state == OBJ_STATE.IDLE)
-    {
+    if (this.player.CanMove()) {
       if (InputControl.LeftDown()) {
         this.player.AddForce(-1, 0, this.player, "keydown", true);
         this.player.SetDir(DIR.LEFT);
@@ -134,7 +133,7 @@ class Game {
         this.player.SetDir(DIR.DOWN);
       }
 
-      if (InputControl.JustDown("Z")) {
+      if (this.player.CanAttack() && InputControl.JustDown("Z")) {
         const attack: GameObject = GameObjectManager.Add(
           this.player.x,
           this.player.y,
@@ -146,6 +145,8 @@ class Game {
     }
 
     GameObjectManager.Update();
+
+    GameObjectManager.PUpdate();
   }
 }
 

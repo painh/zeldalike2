@@ -80,8 +80,7 @@ class Game {
             // this.player.body.angle += 10;
             console.log((Math.atan2(leftStickX, leftStickY) * 180) / Math.PI);
         }
-        // if (this.player.state == OBJ_STATE.IDLE)
-        {
+        if (this.player.CanMove()) {
             if (InputControl.LeftDown()) {
                 this.player.AddForce(-1, 0, this.player, "keydown", true);
                 this.player.SetDir(1 /* LEFT */);
@@ -98,12 +97,13 @@ class Game {
                 this.player.AddForce(0, 1, this.player, "keydown", true);
                 this.player.SetDir(0 /* DOWN */);
             }
-            if (InputControl.JustDown("Z")) {
+            if (this.player.CanAttack() && InputControl.JustDown("Z")) {
                 const attack = GameObjectManager.Add(this.player.x, this.player.y, "playerAttack", 0);
                 attack.lifeTimeMS = 1000;
             }
         }
         GameObjectManager.Update();
+        GameObjectManager.PUpdate();
     }
 }
 var g_game;
