@@ -29,7 +29,7 @@ class Force extends Vector {
     }
 }
 class GameObject {
-    constructor(game, objX, objY, name, frame) {
+    constructor(game, objX, objY, name, frame, owner) {
         this.rect = [];
         this.lifeTimeMS = 0;
         this.isDead = false;
@@ -38,6 +38,7 @@ class GameObject {
         this.moved = false;
         this.idx = 0;
         this.idx = GameObject.sidx++;
+        this.owner = owner;
         this.force = new Force(0, 0, this, "init");
         this.name = name;
         this.spr = game.add.sprite(objX, objY, GameObjectManager.sprName);
@@ -77,6 +78,10 @@ class GameObject {
         }
     }
     GetRect(fx, fy) {
+        if (!this.CanMove()) {
+            fx = 0;
+            fy = 0;
+        }
         return {
             x: this.x + this.rect[0] + fx,
             y: this.y + this.rect[1] + fy,
@@ -107,25 +112,7 @@ class GameObject {
         let fx = this.force.x;
         let fy = this.force.y;
         const newRect = this.GetRect(fx, fy);
-        const list = GameObjectManager.CheckCollision(newRect, this);
-        if (list.length == 0)
-            return true;
-        let moveable = true;
-        list.forEach((e) => {
-            if (e.weight == 255)
-                moveable = false;
-        });
-        return moveable;
-    }
-    MoveDoneThisFrame() {
-        if (this.weight == 255)
-            return true;
-        let fx = this.force.x;
-        let fy = this.force.y;
-        if (fx == 0 || fy == 0)
-            return true;
-        const newRect = this.GetRect(fx, fy);
-        const list = GameObjectManager.CheckCollision(newRect, this);
+        const list = GameObjectManager.CheckCollision(newRect, this, true);
         if (list.length == 0)
             return true;
         let moveable = true;

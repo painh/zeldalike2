@@ -57,15 +57,18 @@ class GameObject {
 
   static sidx: number = 0;
   idx: number = 0;
+  owner: GameObject;
 
   constructor(
     game: Phaser.Game,
     objX: number,
     objY: number,
     name: string,
-    frame: number
+    frame: number,
+    owner: GameObject
   ) {
     this.idx = GameObject.sidx++;
+    this.owner = owner;
 
     this.force = new Force(0, 0, this, "init");
 
@@ -125,6 +128,10 @@ class GameObject {
   }
 
   GetRect(fx, fy) {
+    if (!this.CanMove()) {
+      fx = 0;
+      fy = 0;
+    }
     return {
       x: this.x + this.rect[0] + fx,
       y: this.y + this.rect[1] + fy,
@@ -166,28 +173,11 @@ class GameObject {
 
     const newRect = this.GetRect(fx, fy);
 
-    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
-
-    if (list.length == 0) return true;
-    let moveable = true;
-    list.forEach((e) => {
-      if (e.weight == 255) moveable = false;
-    });
-
-    return moveable;
-  }
-
-  MoveDoneThisFrame(): boolean {
-    if (this.weight == 255) return true;
-
-    let fx = this.force.x;
-    let fy = this.force.y;
-
-    if (fx == 0 || fy == 0) return true;
-
-    const newRect = this.GetRect(fx, fy);
-
-    const list: GameObject[] = GameObjectManager.CheckCollision(newRect, this);
+    const list: GameObject[] = GameObjectManager.CheckCollision(
+      newRect,
+      this,
+      true
+    );
 
     if (list.length == 0) return true;
     let moveable = true;

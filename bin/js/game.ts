@@ -10,7 +10,7 @@ class Game {
   constructor() {
     GameObjectManager.Init(this);
     // this.game = new Phaser.Game(256, 240, Phaser.CANVAS, "", {
-    this.game = new Phaser.Game(256, 16 * 10, Phaser.CANVAS, "game", {
+    this.game = new Phaser.Game(256, 16 * 10, Phaser.AUTO, "game", {
       preload: () => this.preload(),
       init: () => this.init(),
       create: () => this.create(),
@@ -41,7 +41,11 @@ class Game {
   init() {
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.renderer.renderSession.roundPixels = true;
-    Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
+    // Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
+    // Phaser.Canvas.setSmoothingEnabled(this.game.context, false);
+    // this.game.context.imageSmoothingEnabled = false;
+    // this.game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
+    // this.game.scale.setUserScale(3, 3);
   }
 
   makeRoom(name) {
@@ -103,6 +107,16 @@ class Game {
     this.pad1 = this.game.input.gamepad.pad1;
 
     InputControl.Init(this.game);
+
+    const text = this.game.add.text(32, 32, "helloworld 안녕하세요", {
+      font: "12px",
+      fill: "#000000",
+      // fontStyle: "bold",
+    });
+    text.smoothed = true;
+
+    this.game.renderer.renderSession.roundPixels = true;
+    Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
   }
 
   update() {
@@ -148,7 +162,11 @@ class Game {
         this.player.SetDir(DIR.DOWN);
       }
 
-      if (this.player.CanAttack() && InputControl.JustDown("Z")) {
+      if (
+        this.player.CanAttack() &&
+        InputControl.JustDown("Z") &&
+        GameObjectManager.GetNameCnt("playerAttack") == 0
+      ) {
         const attack: GameObject = GameObjectManager.Add(
           this.player.GetAttackX(),
           this.player.GetAttackY(),

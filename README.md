@@ -21,3 +21,5 @@ https://www.mapeditor.org/
         ctrl + 드래그로 snap to grid
 
     Ctrl+S 로 저장 후 Ctrl+E로 export도 함께
+
+아케이드 물리 구현 마무리 해야함(가속도 등)

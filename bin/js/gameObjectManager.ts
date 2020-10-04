@@ -2,7 +2,7 @@ class GameObjectManager {
   static list: GameObject[] = [];
   static game: Game;
   static sprName: string = "gamesprite";
-  static checkedList = [];
+  static checkedList: boolean[] = [];
   static objMoved: boolean;
 
   static MakeKey(obj1: GameObject, obj2: GameObject) {
@@ -26,9 +26,18 @@ class GameObjectManager {
     GameObjectManager.checkedList[key] = true;
   }
 
-  static CollisionChecked(obj1: GameObject, obj2: GameObject) {
+  static CollisionChecked(obj1: GameObject, obj2: GameObject): boolean {
     const key = GameObjectManager.MakeKey(obj1, obj2);
     return GameObjectManager.checkedList[key];
+  }
+
+  static GetNameCnt(name: string): number {
+    let cnt: number = 0;
+
+    GameObjectManager.list.forEach((e) => {
+      if (e.name == name) cnt++;
+    });
+    return cnt;
   }
 
   static Init(game: Game) {
@@ -45,7 +54,14 @@ class GameObjectManager {
 
     switch (name) {
       case "player":
-        obj = new Player(GameObjectManager.game.game, objX, objY, name, frame);
+        obj = new Player(
+          GameObjectManager.game.game,
+          objX,
+          objY,
+          name,
+          frame,
+          owner
+        );
         break;
 
       case "playerAttack":
@@ -65,7 +81,8 @@ class GameObjectManager {
           objX,
           objY,
           name,
-          frame
+          frame,
+          owner
         );
 
         break;
@@ -102,14 +119,18 @@ class GameObjectManager {
     const newRect = gameObj.GetRect(fx, fy);
     const colList: GameObject[] = GameObjectManager.CheckCollision(
       newRect,
-      gameObj
+      gameObj,
+      true
     );
 
-    if (colList.length == 0) {
-      gameObj.x = gameObj.spr.x += fx;
-      gameObj.y = gameObj.spr.y += fy;
+    if (colList.length == 0 && gameObj.CanMove()) {
+      const moveVector = new Vector(fx, fy);
+      if (moveVector.getMagnitude() >= 1) moveVector.setMagnitude(1);
+      gameObj.x = gameObj.spr.x += moveVector.x;
+      gameObj.y = gameObj.spr.y += moveVector.y;
       gameObj.moved = true;
       GameObjectManager.objMoved = true;
+      console.log(this.name);
 
       return true;
     }
@@ -153,79 +174,24 @@ class GameObjectManager {
     });
   }
 
-  // static PUpdate() {
-  //   let moveList = [];
-  //   GameObjectManager.list.forEach((e, k, list) => {
-  //     if (!e.isDead) {
-  //       moveList.push(e);
-  //     }
-  //   });
-
-  //   let cnt = 0;
-  //   while (cnt < 10) {
-  //     cnt++;
-  //     moveList.forEach((srcObj: GameObject, k, objList) => {
-  //       let fx = srcObj.force.x;
-  //       let fy = srcObj.force.y;
-  //       if (fx == 0 && fy == 0) return;
-  //       const newRect = srcObj.GetRect(fx, fy);
-  //       const colList: GameObject[] = GameObjectManager.CheckCollision(
-  //         newRect,
-  //         srcObj
-  //       );
-  //       colList.forEach((targetObj) => {
-  //         if (GameObjectManager.CollisionChecked(targetObj, srcObj)) return;
-  //         GameObjectManager.RegisterCollisionChecked(targetObj, srcObj);
-  //         targetObj.AddForce(fx, fy, srcObj, "checkCollision", false);
-  //       });
-  //       if (colList.length == 0) {
-  //         srcObj.x = srcObj.spr.x += fx;
-  //         srcObj.y = srcObj.spr.y += fy;
-  //         srcObj.moved = true;
-
-  //         objList.splice(k, 1);
-  //       }
-  //     });
-
-  //     if (moveList.length == 0) break;
-
-  //     // if (GameObjectManager.CheckMoveDone()) cnt = 99;
-  //   }
-
-  //   GameObjectManager.list.forEach((gameObj) => {
-  //     const thismag = gameObj.force.getMagnitude();
-  //     let mag: number = thismag - gameObj.weight;
-
-  //     gameObj.colRect.x = Math.round(gameObj.x - TILE_SIZE / 2);
-  //     gameObj.colRect.y = Math.round(gameObj.y - TILE_SIZE / 2);
-
-  //     if (mag <= 0.5) {
-  //       mag = 0;
-  //     }
-  //     gameObj.force.setMagnitude(mag);
-  //   });
-  // }
-
   static AfterUpdate() {
     GameObjectManager.list.forEach((e, k, list) => {
       e.AfterUpdate();
     });
   }
 
-  static CheckMoveDone() {
-    let done = true;
-    GameObjectManager.list.forEach((e) => {
-      if (!done) return;
-      if (!e.MoveDoneThisFrame()) done = false;
-    });
-
-    return done;
-  }
-
-  static CheckCollision(checkRect: any, me: GameObject): GameObject[] {
+  static CheckCollision(
+    checkRect: any,
+    me: GameObject,
+    checkOwner: boolean
+  ): GameObject[] {
     const list = [];
     this.list.forEach((e) => {
       if (e == me) return;
+      if (checkOwner && (me.owner == e || e.owner == me)) {
+        console.log(e.name, me.name, "owner!");
+        return;
+      }
       if (CheckCollision(checkRect, e.GetRect(0, 0))) list.push(e);
     });
 
